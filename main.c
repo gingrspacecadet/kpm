@@ -7,8 +7,10 @@
     #include <io.h>
     #define access    _access
     #define F_OK      0
+    #define CMD       "powershell -NoProfile -Command " "$wc = New-Object System.Net.WebClient; " "$wc.DownloadFile('%s','%s')"
 #else
     #include <unistd.h>
+    #define CMD       "wget -q -O %s \"%s\""
 #endif
 
 #define INSTALL_DIR    /*"C:\\dev\\kpm\\downloads"         // Will be*/ "/mnt/us/kpm/packages"
@@ -20,9 +22,7 @@
 int download(const char *url, const char *outpath) {
     char cmd[1024];
     snprintf(cmd, sizeof(cmd),
-    "powershell -NoProfile -Command "
-    "$wc = New-Object System.Net.WebClient; "
-    "$wc.DownloadFile('%s','%s')"/*"wget -q -O %s \"%s\""*/, url, outpath);
+    CMD, url, outpath);
     return system(cmd);
 }
 
