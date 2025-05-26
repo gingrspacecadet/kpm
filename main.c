@@ -8,14 +8,17 @@
     #define access    _access
     #define F_OK      0
     #define CMD       "powershell -NoProfile -Command " "$wc = New-Object System.Net.WebClient; " "$wc.DownloadFile('%s','%s')"
+    #define INSTALL_DIR    "C:\\dev\\kpm\\downloads"
+    #define MIRRORS_CONF   "C:\\dev\\kpm\\kpm_mirrors.conf"
+    #define TMP_LIST_FILE  "C:\\dev\\kpm\\kpm_packages.conf"
 #else
     #include <unistd.h>
     #define CMD       "wget -q -O %s \"%s\""
+    #define INSTALL_DIR    "/mnt/us/kpm/packages"
+    #define MIRRORS_CONF   "/etc/kpm_mirrors.conf"
+    #define TMP_LIST_FILE  "/tmp/kpm_packages.conf"
 #endif
 
-#define INSTALL_DIR    /*"C:\\dev\\kpm\\downloads"         // Will be*/ "/mnt/us/kpm/packages"
-#define MIRRORS_CONF   /*"C:\\dev\\kpm\\kpm_mirrors.conf"  // Will be*/ "/etc/kpm_mirrors.conf"
-#define TMP_LIST_FILE  /*"C:\\dev\\kpm\\kpm_packages.conf" // Will be*/ "/tmp/kpm_packages.conf"
 #define MAX_LINE       512
 
 // Download URL to local path using wget 
