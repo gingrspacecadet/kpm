@@ -1,4 +1,4 @@
-build/
+out/
 kpm.conf
 kpm_*
 alpine*

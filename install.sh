@@ -3,7 +3,7 @@ set -euo pipefail
 
 echo "Installing kpm to /usr/local/bin..."
 # Download the kpm binary
-wget -q https://raw.githubusercontent.com/gingrspacecadet/kpm/releases/kpm -O /usr/local/bin/kpm
+wget -q https://github.com/gingrspacecadet/kpm/releases/download/kpm/kpm -O /usr/local/bin/kpm
 chmod +x /usr/local/bin/kpm
 
 echo "Creating /etc/kpm and config files..."
@@ -19,6 +19,7 @@ TMP_LIST_FILE=/tmp/kpm/kpm_packages.conf
 EOF
 
 echo "Creating download & install directories..."
+mkdir -p /mnt/us/kpm
 mkdir -p /mnt/us/kpm/packages
 mkdir -p /tmp/kpm
 
