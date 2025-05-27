@@ -6,7 +6,7 @@ mkdir -p /usr/local/bin
 
 echo "Installing kpm to /usr/local/bin..."
 # Download the kpm binary
-wget -q https://github.com/gingrspacecadet/kpm/releases/download/kpm/kpm -O /usr/local/bin/kpm
+curl https://github.com/gingrspacecadet/kpm/releases/download/kpm/kpm > /usr/local/bin/kpm
 chmod +x /usr/local/bin/kpm
 
 echo "Creating /etc/kpm and config files..."
@@ -33,8 +33,7 @@ if [ ! -f ~/.bashrc ]; then
   touch ~/.bashrc
 fi
 # Add export only if not already present
-grep -qxF 'export PATH="/mnt/us/kpm/packages/bin:$PATH"' ~/.bashrc || \
-  echo 'export PATH="/mnt/us/kpm/packages/bin:$PATH"' >> ~/.bashrc
+grep -qxF 'export PATH="/mnt/us/kpm/packages/bin:$PATH"' /etc/profile || \
+  echo 'export PATH="/mnt/us/kpm/packages/bin:$PATH"' >> /etc/profile
 
-source ~/.bashrc
 echo "All done! You can now run 'kpm'."
