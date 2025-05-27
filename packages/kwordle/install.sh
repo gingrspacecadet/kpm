@@ -1,14 +1,37 @@
 #!/bin/sh
-echo "Installing kwordle..."
-TEMP_DIR=/tmp/kpm
-echo "Downloading kwordle package..."
-wget https://github.com/crizmo/KWordle/releases/download/v1.2.0/kwordle.zip -O $TEMP_DIR/kwordle.zip
+set -eu
 
-echo "Extracting package..."
-unzip $TEMP_DIR/kwordle.zip -d $TEMP_DIR
+# ---- Ensure Unix line endings ----
+# (If you ever edit this on Windows, run: dos2unix install.sh)
 
-echo "Installing to device..."
-mkdir -p /mnt/us/documents/kwordle
-cp -r $TEMP_DIR/kwordle/ /mnt/us/documents/kwordle/
-cp $TEMP_DIR/kwordle.sh /mnt/us/documents/
-chmod +x /mnt/us/documents/kwordle/kwordle.sh
+TMPDIR="/tmp/kpm"
+DSTBASE="/mnt/us/documents"
+PKG="kwordle"
+PKGZIP="$TMPDIR/${PKG}.zip"
+PKGDIR="$TMPDIR/$PKG"
+
+echo "Installing $PKG..."
+
+# ---- Prepare staging dir ----
+echo "  * Creating staging directory $TMPDIR"
+mkdir -p "$TMPDIR"
+
+# ---- Download ----
+echo "  * Downloading $PKG package to $PKGZIP"
+wget -q https://github.com/crizmo/KWordle/releases/download/v1.2.0/kwordle.zip \
+     -O "$PKGZIP"
+
+# ---- Extract ----
+echo "  * Extracting package..."
+unzip -o "$PKGZIP" -d "$TMPDIR"
+
+# ---- Install to device ----
+echo "  * Installing to device..."
+mkdir -p "$DSTBASE/$PKG"
+cp -r "$PKGDIR/." "$DSTBASE/$PKG/"
+cp "$TMPDIR/${PKG}.sh" "$DSTBASE/"
+
+echo "  * Making launcher executable"
+chmod +x "$DSTBASE/$PKG/$PKG.sh"
+
+echo "Done! $PKG is installed under $DSTBASE/$PKG"
