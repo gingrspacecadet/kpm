@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+mkdir -p /usr/local
+mkdir -p /usr/local/bin
+
 echo "Installing kpm to /usr/local/bin..."
 # Download the kpm binary
 wget -q https://github.com/gingrspacecadet/kpm/releases/download/kpm/kpm -O /usr/local/bin/kpm
