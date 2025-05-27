@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 echo "Install hello"
 mkdir -p /mnt/us/kpm/packages/hello
 cp hello.sh /mnt/us/kpm/packages/hello/hello.sh
