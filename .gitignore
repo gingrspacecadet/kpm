@@ -1,3 +1,6 @@
 build/
 kpm.conf
 kpm_*
+alpine*
+mnt/
+.vscode/

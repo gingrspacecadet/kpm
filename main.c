@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
+
+#define MAX_LINE 512
 
 #ifdef _WIN32
     #include <io.h>
@@ -14,7 +17,7 @@
     #define CONFIG_DIR     "C:\\dev\\kpm\\kpm.conf"
 #else
     #include <unistd.h>
-    #define CMD       "wget -q -O %s \"%s\""
+    #define CMD        "wget -q -O %s \"%s\""
     #define CONFIG_DIR "/etc/kpm/kpm.conf"
 
     char INSTALL_DIR[MAX_LINE] = "";
@@ -51,10 +54,7 @@
     
         fclose(file);
     }
-    load_config(CONFIG_DIR);
 #endif
-
-#define MAX_LINE       512
 
 // Download URL to local path using wget 
 int download(const char *url, const char *outpath) {
