@@ -10,48 +10,53 @@
     #include <io.h>
     #define access    _access
     #define F_OK      0
-    #define CMD       "powershell -NoProfile -Command " "$wc = New-Object System.Net.WebClient; " "$wc.DownloadFile('%s','%s')"
-    #define INSTALL_DIR    "C:\\dev\\kpm\\downloads"
-    #define MIRRORS_CONF   "C:\\dev\\kpm\\kpm_mirrors.conf"
-    #define TMP_LIST_FILE  "C:\\dev\\kpm\\kpm_packages.conf"
-    #define CONFIG_DIR     "C:\\dev\\kpm\\kpm.conf"
+    #define CMD       "powershell -NoProfile -Command \"$wc = New-Object System.Net.WebClient; $wc.DownloadFile('%s','%s')\""
+    #define CONFIG_DIR "C:\\dev\\kpm\\kpm.conf"
+
+    // On Windows we use fixed paths
+    static const char *INSTALL_DIR   = "C:\\dev\\kpm\\downloads";
+    static const char *MIRRORS_CONF  = "C:\\dev\\kpm\\kpm_mirrors.conf";
+    static const char *TMP_LIST_FILE = "C:\\dev\\kpm\\kpm_packages.conf";
 #else
     #include <unistd.h>
     #define CMD        "wget -q -O %s \"%s\""
     #define CONFIG_DIR "/etc/kpm/kpm.conf"
 
-    char INSTALL_DIR[MAX_LINE] = "";
-    char MIRRORS_CONF[MAX_LINE] = "";
-    char TMP_LIST_FILE[MAX_LINE] = "";
-    
+    // On Unix, these will be filled in by load_config()
+    char INSTALL_DIR[MAX_LINE];
+    char MIRRORS_CONF[MAX_LINE];
+    char TMP_LIST_FILE[MAX_LINE];
+
     void load_config(const char *path) {
         FILE *file = fopen(path, "r");
         if (!file) {
-            fprintf(stderr, "Failed to open config file: %s\n", path);
+            fprintf(stderr, "Failed to open config file: %s: %s\n",
+                    path, strerror(errno));
             exit(1);
         }
-    
+
         char line[MAX_LINE];
         while (fgets(line, sizeof(line), file)) {
-            // Remove newline
-            line[strcspn(line, "\r\n")] = 0;
-    
-            char *equals = strchr(line, '=');
-            if (!equals) continue;
-    
-            *equals = '\0';
-            const char *key = line;
-            const char *value = equals + 1;
-    
+            // strip CR/LF
+            line[strcspn(line, "\r\n")] = '\0';
+
+            // skip empty or comment
+            if (line[0]=='\0' || line[0]=='#') continue;
+            char *eq = strchr(line, '=');
+            if (!eq) continue;
+
+            *eq = '\0';
+            char *key = line;
+            char *val = eq + 1;
+
             if (strcmp(key, "INSTALL_DIR") == 0) {
-                strncpy(INSTALL_DIR, value, MAX_LINE);
+                strncpy(INSTALL_DIR, val, MAX_LINE-1);
             } else if (strcmp(key, "MIRRORS_CONF") == 0) {
-                strncpy(MIRRORS_CONF, value, MAX_LINE);
+                strncpy(MIRRORS_CONF, val, MAX_LINE-1);
             } else if (strcmp(key, "TMP_LIST_FILE") == 0) {
-                strncpy(TMP_LIST_FILE, value, MAX_LINE);
+                strncpy(TMP_LIST_FILE, val, MAX_LINE-1);
             }
         }
-    
         fclose(file);
     }
 #endif
@@ -59,8 +64,7 @@
 // Download URL to local path using wget 
 int download(const char *url, const char *outpath) {
     char cmd[1024];
-    snprintf(cmd, sizeof(cmd),
-    CMD, url, outpath);
+    snprintf(cmd, sizeof(cmd), CMD, outpath, url);
     return system(cmd);
 }
 
@@ -202,51 +206,48 @@ int fetch_package(const char *mirror_fmt, const char *pkg) {
 
 int install_from_mirrors(const char *pkg) {
     FILE *mf = fopen(MIRRORS_CONF, "r");
-    char line[MAX_LINE];
     if (!mf) {
-        fprintf(stderr, "Cannot open %s\n", MIRRORS_CONF);
+        fprintf(stderr, "Cannot open %s: %s\n",
+                MIRRORS_CONF, strerror(errno));
         return 0;
     }
-
+    char line[MAX_LINE];
     while (fgets(line, sizeof(line), mf)) {
-        char mirror_list_url[MAX_LINE], mirror_pkg_fmt[MAX_LINE];
-        // split line on whitespace
-        if (sscanf(line, "%s %s",
-                   mirror_list_url,
-                   mirror_pkg_fmt) != 2)
-            continue;
+        char list_url[MAX_LINE], pkg_fmt[MAX_LINE];
+        if (sscanf(line, "%s %s", list_url, pkg_fmt) != 2) continue;
 
-        printf("Trying mirror: %s\n", mirror_list_url);
-        if (download(mirror_list_url, TMP_LIST_FILE) != 0) {
+        printf("Trying mirror: %s\n", list_url);
+        if (download(list_url, TMP_LIST_FILE) != 0) {
             fprintf(stderr, "  failed to fetch list\n");
             continue;
         }
-
         if (find_in_list(TMP_LIST_FILE, pkg)) {
             printf("  %s found; fetching package...\n", pkg);
             fclose(mf);
-            return fetch_package(mirror_pkg_fmt, pkg);
+            return fetch_package(pkg_fmt, pkg);
         } else {
-            printf("  %s not here; trying next mirror\n", pkg);
+            printf("  %s not here; next mirror\n", pkg);
         }
     }
-
     fclose(mf);
     fprintf(stderr, "Package %s not found on any mirror\n", pkg);
     return 0;
 }
 
 int main(int argc, char *argv[]) {
+    #ifndef _WIN32
+        // Load config on Unix
+        load_config(CONFIG_DIR);
+    #endif
+
     if (argc != 3 || strcmp(argv[1], "-S") != 0) {
         fprintf(stderr, "Usage: %s -S <package>\n", argv[0]);
         return 1;
     }
 
-    const char *pkg = argv[2];
-    if (install_from_mirrors(pkg)) {
-        printf("Successfully downloaded %s\n", pkg);
+    if (install_from_mirrors(argv[2])) {
+        printf("Successfully installed %s\n", argv[2]);
         return 0;
-    } else {
-        return 1;
     }
+    return 1;
 }
