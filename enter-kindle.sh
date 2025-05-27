@@ -6,4 +6,4 @@ exec proot                                                  \
      -r "$ROOTFS"                                           \
      -q /usr/bin/qemu-arm                                   \
      -b /dev -b /proc -b /sys                               \
-     env PATH=/sbin:/usr/sbin:/usr/bin:/bin /bin/sh         \
+     env PATH=/sbin:/usr/sbin:/usr/bin:/bin:/usr/local/bin /bin/sh         \
