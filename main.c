@@ -11,12 +11,47 @@
     #define INSTALL_DIR    "C:\\dev\\kpm\\downloads"
     #define MIRRORS_CONF   "C:\\dev\\kpm\\kpm_mirrors.conf"
     #define TMP_LIST_FILE  "C:\\dev\\kpm\\kpm_packages.conf"
+    #define CONFIG_DIR     "C:\\dev\\kpm\\kpm.conf"
 #else
     #include <unistd.h>
     #define CMD       "wget -q -O %s \"%s\""
-    #define INSTALL_DIR    "/mnt/us/kpm/packages"
-    #define MIRRORS_CONF   "/etc/kpm_mirrors.conf"
-    #define TMP_LIST_FILE  "/tmp/kpm_packages.conf"
+    #define CONFIG_DIR "/etc/kpm/kpm.conf"
+
+    char INSTALL_DIR[MAX_LINE] = "";
+    char MIRRORS_CONF[MAX_LINE] = "";
+    char TMP_LIST_FILE[MAX_LINE] = "";
+    
+    void load_config(const char *path) {
+        FILE *file = fopen(path, "r");
+        if (!file) {
+            fprintf(stderr, "Failed to open config file: %s\n", path);
+            exit(1);
+        }
+    
+        char line[MAX_LINE];
+        while (fgets(line, sizeof(line), file)) {
+            // Remove newline
+            line[strcspn(line, "\r\n")] = 0;
+    
+            char *equals = strchr(line, '=');
+            if (!equals) continue;
+    
+            *equals = '\0';
+            const char *key = line;
+            const char *value = equals + 1;
+    
+            if (strcmp(key, "INSTALL_DIR") == 0) {
+                strncpy(INSTALL_DIR, value, MAX_LINE);
+            } else if (strcmp(key, "MIRRORS_CONF") == 0) {
+                strncpy(MIRRORS_CONF, value, MAX_LINE);
+            } else if (strcmp(key, "TMP_LIST_FILE") == 0) {
+                strncpy(TMP_LIST_FILE, value, MAX_LINE);
+            }
+        }
+    
+        fclose(file);
+    }
+    load_config(CONFIG_DIR);
 #endif
 
 #define MAX_LINE       512
@@ -59,18 +94,30 @@ int find_in_list(const char *listpath, const char *pkg) {
 
 // Build download URL from mirror format and pkg name, then download 
 int fetch_package(const char *mirror_fmt, const char *pkg) {
-    char url[MAX_LINE], outpath[MAX_LINE], pkgdir[MAX_LINE];
+    char url[MAX_LINE * 2], outpath[MAX_LINE], pkgdir[MAX_LINE];
     const char *marker = "{pkg}";
-    char *p = strstr(mirror_fmt, marker);
-    if (!p) return 0;
+    const size_t marker_len = strlen(marker);
+    const size_t pkg_len = strlen(pkg);
 
-    // Build the download URL
-    size_t prefix_len = p - mirror_fmt;
-    const char *suffix = p + strlen(marker);
-    snprintf(url, sizeof(url),
-             "%.*s%s%s",
-             (int)prefix_len, mirror_fmt,
-             pkg, suffix);
+    // Replace all instances of "{pkg}" with pkg into url
+    const char *src = mirror_fmt;
+    char *dst = url;
+    while (*src && (dst - url) < (int)sizeof(url) - 1) {
+        if (strncmp(src, marker, marker_len) == 0) {
+            if ((dst - url) + pkg_len >= sizeof(url) - 1) break;
+            strcpy(dst, pkg);
+            dst += pkg_len;
+            src += marker_len;
+        } else {
+            *dst++ = *src++;
+        }
+    }
+    *dst = '\0';
+
+    // Figure out the suffix (file extension)
+    const char *suffix = strrchr(url, '/');
+    suffix = suffix ? strrchr(suffix, '.') : NULL;
+    if (!suffix) suffix = "";
 
     // Prepare local paths
     snprintf(outpath, sizeof(outpath),
@@ -126,19 +173,17 @@ int fetch_package(const char *mirror_fmt, const char *pkg) {
         return 0;
     }
 
+    // Run install.sh
     char script_path[MAX_LINE];
     snprintf(script_path, sizeof(script_path),
              "%s/install.sh", pkgdir);
 
-    // Check if install.sh exists
     if (access(script_path, F_OK) == 0) {
-        // Make sure it's executable
         char chmod_cmd[MAX_LINE];
         snprintf(chmod_cmd, sizeof(chmod_cmd),
                  "chmod +x \"%s\"", script_path);
         system(chmod_cmd);
 
-        // Run it
         char run_cmd[MAX_LINE];
         snprintf(run_cmd, sizeof(run_cmd),
                  "sh \"%s\"", script_path);

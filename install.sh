@@ -10,4 +10,4 @@ touch /etc/kpm_mirrors.conf
 echo "Creating installation directories..."
 mkdir -p /mnt/us/kpm
 mkdir -p /mnt/us/kpm/packages
-echo 'export PATH="/mt/us/kpm/packages:$PATH"' >> ~/.bashrc
+echo 'export PATH="/mnt/us/kpm/packages:$PATH"' >> ~/.bashrc
