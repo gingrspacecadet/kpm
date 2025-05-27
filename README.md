@@ -3,13 +3,13 @@ Package manager for kindle
 
 ## Prerequisites
 `kterm` for the terminal<br>
-`wget` for downloading (should come with kterm)<br>
+`curl` & `wget` for downloading (should come with kterm)<br>
 `unzip` and/or `tar` for extracting packages<br>
 
 ## Download
 Run the following commands on your kindle:
 ```
-wget https://raw.githubusercontent.com/gingrspacecadet/kpm/refs/heads/main/install.sh
+curl https://raw.githubusercontent.com/gingrspacecadet/kpm/main/install.sh > install.sh
 chmod +x install.sh
 ./install.sh
 ```
