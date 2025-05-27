@@ -1,20 +1,34 @@
-#!/bin/sh
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
-echo "Installing kpm..."
-wget https://raw.githubusercontent.com/gingrspacecadet/kpm/releases/kpm -O /usr/local/bin/kpm
+echo "Installing kpm to /usr/local/bin..."
+# Download the kpm binary
+wget -q https://raw.githubusercontent.com/gingrspacecadet/kpm/releases/kpm -O /usr/local/bin/kpm
 chmod +x /usr/local/bin/kpm
 
-echo "Creating config files..."
+echo "Creating /etc/kpm and config files..."
 mkdir -p /etc/kpm
-touch /etc/kpm/kpm_mirrors.conf
-echo "https://raw.githubusercontent.com/gingrspacecadet/kpm/main/packages.conf https://github.com/gingrspacecadet/kpm/releases/download/{pkg}/{pkg}.zip" > /etc/kpm/kpm_mirrors.conf
-touch /etc/kpm/kpm.conf
-echo "INSTALL_DIR=/mnt/us/kpm/packages" >> /etc/kpm/kpm.conf
-echo "MIRRORS_CONF=/etc/kpm/kpm_mirrors.conf" >> /etc/kpm/kpm.conf
-echo "TMP_LIST_FILE=/tmp/kpm/kpm_packages.conf" >> /etc/kpm/kpm.conf
+cat > /etc/kpm/kpm_mirrors.conf << 'EOF'
+https://raw.githubusercontent.com/gingrspacecadet/kpm/main/packages.conf https://github.com/gingrspacecadet/kpm/releases/download/{pkg}/{pkg}.zip
+EOF
 
-echo "Creating installation directories..."
-mkdir -p /mnt/us/kpm
+cat > /etc/kpm/kpm.conf << 'EOF'
+INSTALL_DIR=/mnt/us/kpm/packages
+MIRRORS_CONF=/etc/kpm/kpm_mirrors.conf
+TMP_LIST_FILE=/tmp/kpm/kpm_packages.conf
+EOF
+
+echo "Creating download & install directories..."
 mkdir -p /mnt/us/kpm/packages
-echo 'export PATH="/mnt/us/kpm/packages:$PATH"' >> ~/.bashrc
+mkdir -p /tmp/kpm
+
+echo "Configuring PATH in ~/.bashrc..."
+# Ensure ~/.bashrc exists
+if [ ! -f ~/.bashrc ]; then
+  touch ~/.bashrc
+fi
+# Add export only if not already present
+grep -qxF 'export PATH="/mnt/us/kpm/packages:$PATH"' ~/.bashrc || \
+  echo 'export PATH="/mnt/us/kpm/packages:$PATH"' >> ~/.bashrc
+
+echo "All done! You can now run 'kpm'."
