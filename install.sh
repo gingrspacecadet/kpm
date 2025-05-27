@@ -28,7 +28,7 @@ if [ ! -f ~/.bashrc ]; then
   touch ~/.bashrc
 fi
 # Add export only if not already present
-grep -qxF 'export PATH="/mnt/us/kpm/packages:$PATH"' ~/.bashrc || \
-  echo 'export PATH="/mnt/us/kpm/packages:$PATH"' >> ~/.bashrc
+grep -qxF 'export PATH="/mnt/us/kpm/packages/bin:$PATH"' ~/.bashrc || \
+  echo 'export PATH="/mnt/us/kpm/packages/bin:$PATH"' >> ~/.bashrc
 
 echo "All done! You can now run 'kpm'."
