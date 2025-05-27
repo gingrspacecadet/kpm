@@ -21,6 +21,7 @@ EOF
 echo "Creating download & install directories..."
 mkdir -p /mnt/us/kpm
 mkdir -p /mnt/us/kpm/packages
+mkdir -p /mnt/us/kpm/packages/bin
 mkdir -p /tmp/kpm
 
 echo "Configuring PATH in ~/.bashrc..."
@@ -32,4 +33,5 @@ fi
 grep -qxF 'export PATH="/mnt/us/kpm/packages/bin:$PATH"' ~/.bashrc || \
   echo 'export PATH="/mnt/us/kpm/packages/bin:$PATH"' >> ~/.bashrc
 
+source ~/.bashrc
 echo "All done! You can now run 'kpm'."
