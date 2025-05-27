@@ -3,6 +3,10 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #define MAX_LINE 512
 
@@ -96,51 +100,78 @@ int find_in_list(const char *listpath, const char *pkg) {
     return 0;
 }
 
-// Build download URL from mirror format and pkg name, then download 
+// Helper: create one directory, ignore EEXIST
+static int ensure_dir(const char *path, mode_t mode) {
+    if (mkdir(path, mode) == 0 || errno == EEXIST) {
+        return 0;
+    } else {
+        perror(path);
+        return -1;
+    }
+}
+
+// Helper: run a command via fork+execvp and wait for it
+static int run_cmd(char *const argv[]) {
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("fork");
+        return -1;
+    }
+    if (pid == 0) {
+        execvp(argv[0], argv);
+        perror("execvp");
+        _exit(127);
+    }
+    int status;
+    if (waitpid(pid, &status, 0) < 0) {
+        perror("waitpid");
+        return -1;
+    }
+    if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+        return 0;
+    } else {
+        fprintf(stderr, "%s failed with exit code %d\n",
+                argv[0], WEXITSTATUS(status));
+        return -1;
+    }
+}
+
 int fetch_package(const char *mirror_fmt, const char *pkg) {
     char url[MAX_LINE * 2], outpath[MAX_LINE], pkgdir[MAX_LINE];
     const char *marker = "{pkg}";
-    const size_t marker_len = strlen(marker);
-    const size_t pkg_len = strlen(pkg);
+    size_t mlen = strlen(marker), plen = strlen(pkg);
 
-    // Replace all instances of "{pkg}" with pkg into url
-    const char *src = mirror_fmt;
-    char *dst = url;
-    while (*src && (dst - url) < (int)sizeof(url) - 1) {
-        if (strncmp(src, marker, marker_len) == 0) {
-            if ((dst - url) + pkg_len >= sizeof(url) - 1) break;
-            strcpy(dst, pkg);
-            dst += pkg_len;
-            src += marker_len;
+    // Build URL
+    const char *s = mirror_fmt;
+    char *d = url;
+    while (*s && (d - url) < (int)sizeof(url) - 1) {
+        if (strncmp(s, marker, mlen) == 0) {
+            if ((d - url) + plen >= sizeof(url) - 1) break;
+            memcpy(d, pkg, plen);
+            d += plen;
+            s += mlen;
         } else {
-            *dst++ = *src++;
+            *d++ = *s++;
         }
     }
-    *dst = '\0';
+    *d = '\0';
 
-    // Figure out the suffix (file extension)
-    const char *suffix = strrchr(url, '/');
-    suffix = suffix ? strrchr(suffix, '.') : NULL;
-    if (!suffix) suffix = "";
+    // Determine suffix
+    const char *slash = strrchr(url, '/');
+    const char *dot = slash ? strrchr(slash, '.') : NULL;
+    const char *suffix = dot ? dot : "";
 
-    // Prepare local paths
-    snprintf(outpath, sizeof(outpath),
-             "%s/%s%s",
-             INSTALL_DIR, pkg, suffix);
-    snprintf(pkgdir, sizeof(pkgdir),
-             "%s/%s",
-             INSTALL_DIR, pkg);
+    // Paths
+    snprintf(outpath, sizeof(outpath), "%s/%s%s", INSTALL_DIR, pkg, suffix);
+    snprintf(pkgdir,  sizeof(pkgdir),  "%s/%s",    INSTALL_DIR, pkg);
 
-    // Ensure the install directory and package subdir exist
-    {
-        char cmd[MAX_LINE];
-        snprintf(cmd, sizeof(cmd),
-                 "mkdir -p \"%s\" \"%s\"",
-                 INSTALL_DIR, pkgdir);
-        system(cmd);
+    // Create directories
+    if (ensure_dir(INSTALL_DIR, 0755) ||
+        ensure_dir(pkgdir,      0755)) {
+        return 0;
     }
 
-    // Download
+    // Download archive
     printf("Downloading %s -> %s\n", url, outpath);
     if (download(url, outpath) != 0) {
         fprintf(stderr, "Download failed\n");
@@ -149,59 +180,48 @@ int fetch_package(const char *mirror_fmt, const char *pkg) {
 
     // Extract
     if (strstr(suffix, ".zip")) {
-        char cmd[MAX_LINE];
-        snprintf(cmd, sizeof(cmd),
-                 "unzip -o \"%s\" -d \"%s\"",
-                 outpath, pkgdir);
-        printf("Extracting ZIP: %s\n", cmd);
-        if (system(cmd) != 0) return 0;
+        char *const args[] = { "unzip", "-o", outpath, "-d", pkgdir, NULL };
+        printf("Extracting ZIP...\n");
+        if (run_cmd(args) < 0) return 0;
     }
     else if (strstr(suffix, ".tar.gz")) {
-        char cmd[MAX_LINE];
-        snprintf(cmd, sizeof(cmd),
-                 "tar -xzf \"%s\" -C \"%s\"",
-                 outpath, pkgdir);
-        printf("Extracting tar.gz: %s\n", cmd);
-        if (system(cmd) != 0) return 0;
+        char *const args[] = { "tar", "-xzf", outpath, "-C", pkgdir, NULL };
+        printf("Extracting tar.gz...\n");
+        if (run_cmd(args) < 0) return 0;
     }
     else if (strstr(suffix, ".tar.xz")) {
-        char cmd[MAX_LINE];
-        snprintf(cmd, sizeof(cmd),
-                 "tar -xJf \"%s\" -C \"%s\"",
-                 outpath, pkgdir);
-        printf("Extracting tar.xz: %s\n", cmd);
-        if (system(cmd) != 0) return 0;
+        char *const args[] = { "tar", "-xJf", outpath, "-C", pkgdir, NULL };
+        printf("Extracting tar.xz...\n");
+        if (run_cmd(args) < 0) return 0;
     }
     else {
         fprintf(stderr, "Unknown archive format: %s\n", suffix);
         return 0;
     }
 
-    // Run install.sh
-    char script_path[MAX_LINE];
-    snprintf(script_path, sizeof(script_path),
-             "%s/install.sh", pkgdir);
-
-    if (access(script_path, F_OK) == 0) {
-        char chmod_cmd[MAX_LINE];
-        snprintf(chmod_cmd, sizeof(chmod_cmd),
-                 "chmod +x \"%s\"", script_path);
-        system(chmod_cmd);
-
-        char run_cmd[MAX_LINE];
-        snprintf(run_cmd, sizeof(run_cmd),
-                 "sh \"%s\"", script_path);
-        printf("Running install script: %s\n", run_cmd);
-        if (system(run_cmd) != 0) {
-            fprintf(stderr, "install.sh failed\n");
-            return 0;
-        }
-    } else {
+    // install.sh
+    char script[MAX_LINE];
+    snprintf(script, sizeof(script), "%s/install.sh", pkgdir);
+    if (access(script, F_OK) != 0) {
         fprintf(stderr, "Error: install.sh not found in %s\n", pkgdir);
         return 0;
     }
 
-    return 1;  // success
+    // Make it executable
+    if (chmod(script, 0755) != 0) {
+        perror("chmod install.sh");
+        return 0;
+    }
+
+    // Run it directly
+    printf("Running install script: %s\n", script);
+    char *const runargs[] = { script, NULL };
+    if (run_cmd(runargs) < 0) {
+        fprintf(stderr, "install.sh failed\n");
+        return 0;
+    }
+
+    return 1;
 }
 
 int install_from_mirrors(const char *pkg) {

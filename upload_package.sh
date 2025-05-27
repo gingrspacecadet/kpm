@@ -15,12 +15,9 @@ if [[ -f "$zipfile" ]]; then
   rm "$zipfile"
 fi
 
-echo "Zipping $pkgdir into $zipfile..."
-zip -r "$zipfile" "$pkgdir"
-if [[ $? -ne 0 ]]; then
-  echo "ERROR: Failed to zip package"
-  exit 1
-fi
+echo "Zipping contents of $pkgdir into $zipfile..."
+(cd "$pkgdir" && zip -r "../$zipfile" .)
+mv "packages/$zipfile" ./
 
 echo "Checking if tag/release \"$pkgname\" exists..."
 
@@ -36,7 +33,7 @@ if git ls-remote --tags origin | grep -q "refs/tags/$pkgname$"; then
   git push origin --delete "$pkgname"
 fi
 
-# Delete existing GitHub release if exists (ignore error if not found)
+# Delete existing GitHub release if exists
 if gh release view "$pkgname" >/dev/null 2>&1; then
   echo "Deleting existing GitHub release $pkgname"
   gh release delete "$pkgname" -y

@@ -6,7 +6,7 @@ mkdir -p /usr/local/bin
 
 echo "Installing kpm to /usr/local/bin..."
 # Download the kpm binary
-curl https://github.com/gingrspacecadet/kpm/releases/download/kpm/kpm > /usr/local/bin/kpm
+wget https://github.com/gingrspacecadet/kpm/releases/download/kpm/kpm -O /usr/local/bin/kpm
 chmod +x /usr/local/bin/kpm
 
 echo "Creating /etc/kpm and config files..."
