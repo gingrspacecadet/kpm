@@ -1,0 +1,59 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta charset="utf-8">
+  <script src="js/polyfill.min.js"></script>
+  <script src="js/words.js"></script>
+  <script src="main.js"></script>
+  <link href="main.css" rel="stylesheet">
+  <title>KWordle</title>
+</head>
+<body onload="onPageLoad()">
+  <div id="log" style="display:none;"></div>
+
+  <h1><img src="wordle-icon.png" width="30%"/></h1>
+  
+  <div id="game-container">
+    <div id="message" class="message"></div>
+    
+    <div id="letter-grid" class="letter-grid">
+      <!-- Grid will be populated by JavaScript -->
+    </div>
+    
+    <!-- The indicator key will be inserted here by JavaScript -->
+    
+    <div id="keyboard" class="keyboard">
+      <!-- Keyboard will be populated by JavaScript -->
+    </div>
+    
+    <div class="button-container">
+      <button id="reset-button" onclick="resetGame()">New Game</button>
+      <button id="lang" onclick="changeLanguage()">English</button>
+      <button id="stats-button" onclick="showStatistics()">Stats</button>
+      <button id="credits-button" onclick="showCredits()">Credits</button>
+      <button id="update" onclick="window.location.reload();">Update</button>
+    </div>
+  </div>
+  
+  <div id="stats-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeStatistics()">&times;</span>
+      <div id="stats-content">
+        <!-- Statistics will be populated by JavaScript -->
+      </div>
+    </div>
+  </div>
+  <div id="credits-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeCredits()">&times;</span>
+      <div id="credits-content">
+        <!-- Credits will be populated by JavaScript -->
+      </div>
+    </div>
+  </div>
+  <div class="footer">
+    <p>KWordle v1.2.0 - Wordle for Kindle</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,687 @@
+/* KAnki - Responsive Styles for Different Kindle Models */
+
+/* Root element custom properties for dynamic scaling */
+:root {
+  --device-scale: 1;
+  --font-size-base: calc(1rem * var(--device-scale));
+  --spacing-base: calc(1rem * var(--device-scale));
+  font-size: 100%;
+}
+
+/* Base styles - already defined in main.css */
+
+/* Base size adjustments */
+body {
+  font-size: var(--font-size-base);
+}
+
+/* Card sizing adjustments with scaling */
+.card {
+  max-width: calc(90% / var(--device-scale));
+  margin-left: auto;
+  margin-right: auto;
+  padding: calc(20px * var(--device-scale));
+}
+
+/* Text size adjustments */
+.cardFront {
+  font-size: calc(2em * var(--device-scale));
+}
+
+.cardBack {
+  font-size: calc(1.6em * var(--device-scale));
+}
+
+.cardNotes {
+  font-size: calc(1em * var(--device-scale));
+}
+
+/* Button sizing adjustments */
+button {
+  font-size: calc(1em * var(--device-scale));
+  padding: calc(5px * var(--device-scale)) calc(10px * var(--device-scale));
+}
+
+/* Portrait and landscape orientation adjustments */
+@media screen and (orientation: portrait) {
+  .cardFront {
+    margin-top: 30px;
+  }
+  
+  #levelButtons {
+    margin-bottom: 15px;
+  }
+}
+
+@media screen and (orientation: landscape) {
+  .card {
+    width: 80%;
+  }
+  
+  #levelButtons button {
+    margin: 0 2px;
+  }
+}
+
+/* Small Kindle screens (original models): 600×800 */
+@media screen and (width: 600px) and (height: 800px) {
+  /* Original sizes are optimized for this resolution already */
+}
+
+/* Mid-size Kindle screens: 758×1024, 824×1200 */
+@media screen and (min-width: 750px) and (max-width: 830px),
+       screen and (min-height: 1000px) and (max-height: 1210px) {
+  .card {
+    height: 400px;
+    max-width: 85%;
+    margin: 25px auto;
+    padding: 25px;
+  }
+
+  .cardFront {
+    font-size: 2.3em;
+    min-height: 80px;
+    margin-bottom: 30px;
+  }
+
+  .cardBack {
+    font-size: 1.8em;
+    min-height: 65px;
+    margin-bottom: 15px;
+  }
+
+  #controlButtons {
+    height: 200px;
+    margin: 25px 0 40px 0;
+  }
+
+  #intervalButtons {
+    top: 85px;
+    height: 100px;
+  }
+
+  .intervalBtn {
+    padding: 12px 16px;
+    margin: 12px 10px;
+    min-width: 75px;
+    font-size: 1.1em;
+  }
+
+  #showAnswerBtn, #incorrectBtn, #correctBtn {
+    padding: 12px 25px;
+    font-size: 1.2em;
+    margin-bottom: 20px;
+  }
+
+  .progressBar, .levelDisplay {
+    font-size: 1.2em;
+    margin: 15px 0;
+  }
+}
+
+/* Large Kindle screens: 1072×1448, 1236×1648, 1264×1680 */
+@media screen and (min-width: 1050px) and (max-width: 1300px),
+       screen and (min-height: 1400px) and (max-height: 1700px) {
+  h1 {
+    font-size: 2em;
+    margin: 20px 0;
+  }
+
+  .card {
+    height: 550px;
+    max-width: 85%;
+    margin: 25px auto;
+    padding: 25px;
+  }
+
+  .cardFront {
+    font-size: 3em;
+    min-height: 110px;
+    margin-bottom: 40px;
+  }
+
+  .cardBack {
+    font-size: 2.2em;
+    min-height: 90px;
+    margin-bottom: 20px;
+    padding-top: 25px;
+  }
+
+  .cardNotes {
+    font-size: 1.2em;
+    margin-top: 20px;
+  }
+
+  .cardStats {
+    font-size: 0.9em;
+    margin-top: 25px;
+  }
+
+  #controlButtons {
+    height: 240px;
+    margin: 35px 0 45px 0;
+  }
+
+  #intervalButtons {
+    top: 100px;
+    height: 120px;
+  }
+
+  .intervalBtn {
+    padding: 15px 20px;
+    margin: 15px 12px;
+    min-width: 85px;
+    font-size: 1.3em;
+  }
+
+  #showAnswerBtn, #incorrectBtn, #correctBtn {
+    padding: 15px 30px;
+    font-size: 1.4em;
+    margin-bottom: 25px;
+  }
+
+  .buttonContainer button {
+    padding: 10px 15px;
+    margin: 0 8px;
+    font-size: 1.1em;
+  }
+
+  #levelButtons {
+    margin-bottom: 40px;
+    padding-bottom: 15px;
+  }
+
+  .progressBar, .levelDisplay {
+    font-size: 1.4em;
+    margin: 20px 0;
+  }
+
+  .starButton {
+    font-size: 2em;
+    padding: 8px;
+  }
+
+  .levelBadge {
+    padding: 5px 12px;
+    font-size: 1em;
+  }
+}
+
+/* Extra Large Kindle screens: 1860×2480 (Scribe) */
+@media screen and (min-width: 1800px),
+       screen and (min-height: 2400px) {
+  h1 {
+    font-size: 3.2em;
+    margin: 40px 0;
+  }
+
+  .card {
+    height: 700px;
+    max-width: 75%;
+    margin: 45px auto;
+    padding: 45px;
+  }
+
+  .cardFront {
+    font-size: 3.8em;
+    min-height: 150px;
+    margin-bottom: 50px;
+  }
+
+  .cardBack {
+    font-size: 2.8em;
+    min-height: 120px;
+    margin-bottom: 30px;
+    padding-top: 35px;
+  }
+
+  .cardNotes {
+    font-size: 1.6em;
+    margin-top: 30px;
+  }
+
+  .cardStats {
+    font-size: 1.2em;
+    margin-top: 35px;
+  }
+
+  #controlButtons {
+    height: 320px;
+    margin: 45px 0 60px 0;
+  }
+
+  #intervalButtons {
+    top: 130px;
+    height: 160px;
+  }
+
+  .intervalBtn {
+    padding: 20px 25px;
+    margin: 20px 15px;
+    min-width: 100px;
+    font-size: 1.6em;
+  }
+
+  #showAnswerBtn, #incorrectBtn, #correctBtn {
+    padding: 20px 40px;
+    font-size: 1.8em;
+    margin-bottom: 35px;
+  }
+
+  .buttonContainer button {
+    padding: 12px 20px;
+    margin: 0 12px;
+    font-size: 1.4em;
+  }
+
+  #levelButtons {
+    margin-bottom: 55px;
+    padding-bottom: 20px;
+  }
+
+  .progressBar, .levelDisplay {
+    font-size: 1.8em;
+    margin: 25px 0;
+  }
+
+  .starButton {
+    font-size: 2.5em;
+    padding: 10px;
+  }
+
+  .levelBadge {
+    padding: 8px 15px;
+    font-size: 1.3em;
+  }
+
+  .popup {
+    max-width: 500px;
+    padding: 30px;
+  }
+
+  .popup-message {
+    font-size: 1.6em;
+    margin-bottom: 30px;
+  }
+
+  .confirmBtn, .cancelBtn {
+    padding: 15px 25px;
+    font-size: 1.4em;
+  }
+
+  .toast-notification {
+    max-width: 500px;
+    padding: 15px 30px;
+    font-size: 1.4em;
+  }
+}
+
+/* Extra large screens - Kindle Scribe, etc. */
+@media screen and (min-width: 1800px) {
+  .topBar {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 10px 30px;
+  }
+  
+  .menuBar {
+    max-width: 1400px;
+  }
+  
+  .infoArea {
+    padding-right: 30px;
+  }
+  
+  .progressBar, .levelDisplay {
+    margin-left: 25px;
+  }
+  
+  #title {
+    font-size: 2em;
+  }
+}
+
+/* Improve button layout without Incorrect button */
+@media screen and (min-width: 600px) {
+  #showAnswerBtn {
+    padding: 15px 30px;
+    font-size: 1.2em;
+    min-width: 50%;
+  }
+
+  .intervalBtn {
+    padding: 12px 18px;
+    margin: 15px 10px;
+    min-width: 80px;
+  }
+}
+
+/* Even larger buttons for Kindle Paperwhite and up */
+@media screen and (min-width: 1000px) {
+  #showAnswerBtn {
+    padding: 18px 35px;
+    font-size: 1.3em;
+    min-width: 60%;
+  }
+
+  .intervalBtn {
+    padding: 15px 20px;
+    margin: 18px 12px;
+    min-width: 90px;
+    font-size: 1.1em;
+  }
+
+  /* More space between button rows */
+  #intervalButtons {
+    top: 80px;
+    height: 110px;
+  }
+}
+
+/* Special styles for very old Kindle models */
+.kindle-small {
+  font-size: 0.95em;
+}
+
+.kindle-small .cardFront {
+  font-size: 1.8em;
+}
+
+.kindle-small .intervalBtn {
+  padding: 5px 8px;
+  margin: 8px 4px;
+  min-width: 50px;
+  font-size: 0.8em;
+}
+
+.kindle-small #showAnswerBtn,
+.kindle-small #incorrectBtn {
+  padding: 8px 15px;
+  font-size: 0.9em;
+}
+
+/* Add specific optimizations for Kindle models with odd aspect ratios */
+@media screen and (width: 824px) and (height: 1200px) {
+  /* DX model adjustments */
+  .card {
+    height: 380px;
+    max-width: 90%;
+  }
+  
+  #controlButtons {
+    margin-top: 15px;
+  }
+}
+
+/* Kindle Touch/Basic specific styles */
+@media screen and (max-width: 600px) and (max-height: 800px) {
+  .card {
+    height: 260px;
+    margin: 15px auto;
+    padding: 15px;
+  }
+  
+  .cardFront {
+    font-size: 1.7em;
+    min-height: 50px;
+    margin-bottom: 15px;
+  }
+  
+  .cardBack {
+    font-size: 1.3em;
+    min-height: 40px;
+  }
+  
+  #controlButtons {
+    height: 140px;
+    margin: 15px 0 20px 0;
+  }
+  
+  #intervalButtons {
+    top: 60px;
+  }
+}
+
+/* Fix overlay elements for all screens */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin-left: 0;
+  margin-top: 0;
+}
+
+.toast-notification {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-left: 0;
+}
+
+/* Improve button visibility on all screens */
+button:focus {
+  outline: 2px solid #000;
+}
+
+/* Menu bar responsive styles */
+@media screen and (max-width: 600px) {
+  .menuBar {
+    width: 100%;
+  }
+  
+  .topBar {
+    padding: 3px 5px;
+  }
+  
+  #title {
+    font-size: 1.2em;
+  }
+  
+  .progressBar, .levelDisplay {
+    font-size: 0.8em;
+  }
+  
+  #levelButtons button, #toolButtons button {
+    margin: 1px;
+    padding: 4px 5px;
+    font-size: 0.8em;
+  }
+}
+
+@media screen and (min-width: 750px) and (max-width: 830px),
+       screen and (min-height: 1000px) and (max-height: 1210px) {
+  .menuBar {
+    width: 95%;
+  }
+  
+  .topBar {
+    padding: 5px 15px;
+  }
+  
+  #title {
+    font-size: 1.4em;
+  }
+  
+  .progressBar, .levelDisplay {
+    font-size: 0.9em;
+    margin-left: 15px;
+  }
+  
+  #levelButtons button, #toolButtons button {
+    margin: 3px;
+    padding: 6px 8px;
+    font-size: 1em;
+  }
+}
+
+@media screen and (min-width: 1050px), 
+       screen and (min-height: 1400px) {
+  .menuBar {
+    width: 90%;
+    max-width: 1000px;
+  }
+  
+  .topBar {
+    padding: 7px 20px;
+  }
+  
+  #title {
+    font-size: 1.8em;
+  }
+  
+  .progressBar, .levelDisplay {
+    font-size: 1em;
+    margin-left: 15px;
+  }
+  
+  .infoArea {
+    padding-right: 25px;
+  }
+  
+  #levelButtons button, #toolButtons button {
+    margin: 4px;
+    padding: 7px 10px;
+    font-size: 1.1em;
+  }
+}
+
+/* Popup and toast notification responsive styles */
+@media screen and (max-width: 600px) {
+  .popup {
+    width: 220px;
+    margin-left: -110px;
+    padding: 15px;
+  }
+  
+  .toast-notification {
+    width: 200px;
+    margin-left: -100px;
+  }
+}
+
+@media screen and (min-width: 750px) {
+  .popup {
+    width: 260px;
+    margin-left: -130px;
+  }
+  
+  .toast-notification {
+    width: 260px;
+    margin-left: -130px;
+  }
+}
+
+@media screen and (min-width: 1050px) {
+  .popup {
+    width: 300px;
+    margin-left: -150px;
+    padding: 25px;
+  }
+  
+  .toast-notification {
+    width: 300px;
+    margin-left: -150px;
+    padding: 15px 0;
+  }
+}
+
+/* Layout adjustments for high-DPI screens */
+@media screen and (min-width: 1000px), screen and (min-height: 1400px) {
+  /* Paperwhite and higher resolution specific tweaks */
+  .menuBar {
+    padding: calc(5px * var(--device-scale)) 0;
+  }
+  
+  #levelButtons button {
+    margin: calc(2px * var(--device-scale));
+    font-size: calc(0.85em * var(--device-scale));
+  }
+  
+  /* Prevent elements from being too large on high-res screens */
+  #headerBar {
+    margin-bottom: calc(10px * var(--device-scale));
+  }
+  
+  .topBar {
+    padding: calc(5px * var(--device-scale));
+  }
+  
+  #title {
+    font-size: calc(1.4em * var(--device-scale));
+  }
+  
+  .menuSection button {
+    margin: calc(2px * var(--device-scale));
+  }
+  
+  #controlButtons {
+    margin-top: calc(20px * var(--device-scale));
+  }
+
+  #intervalButtons {
+    margin-top: calc(15px * var(--device-scale));
+  }
+  
+  .intervalBtn {
+    margin: calc(5px * var(--device-scale));
+  }
+}
+
+/* Specific fixes for Kindle Paperwhite 3 (1072×1448) */
+.kindle-paperwhite {
+  /* Reduce spacing to prevent cramping */
+  --device-scale: 0.6;
+}
+
+.kindle-paperwhite #headerBar {
+  margin-bottom: 10px;
+}
+
+.kindle-paperwhite .menuBar {
+  padding: 3px 0;
+}
+
+.kindle-paperwhite #levelButtons button {
+  padding: 4px 8px;
+  margin: 0 1px;
+  font-size: 0.8em;
+}
+
+.kindle-paperwhite .card {
+  max-width: 85%;
+  padding: 20px;
+  margin: 15px auto;
+}
+
+.kindle-paperwhite .cardFront {
+  font-size: 1.8em;
+  margin-bottom: 20px;
+}
+
+.kindle-paperwhite .cardBack {
+  font-size: 1.5em;
+  margin-bottom: 15px;
+}
+
+.kindle-paperwhite #showAnswerBtn, 
+.kindle-paperwhite #incorrectBtn, 
+.kindle-paperwhite #correctBtn {
+  padding: 8px 16px;
+  font-size: 1em;
+}
+
+.kindle-paperwhite .intervalBtn {
+  padding: 6px 10px;
+  font-size: 0.9em;
+  margin: 5px;
+}
