@@ -1,5 +1,17 @@
 #!/bin/sh
-echo "Install kanki"
-cp -r kanki /mnt/us/documents/kanki
+echo "Installing kanki..."
+TEMP_DIR=$(mktemp -d)
+echo "Downloading kanki package..."
+curl -L https://github.com/crizmo/KAnki/releases/download/v1.1.0/kanki.zip -o "$TEMP_DIR/kanki.zip"
+
+echo "Extracting package..."
+unzip -q "$TEMP_DIR/kanki.zip" -d "$TEMP_DIR"
+
+echo "Installing to device..."
+mkdir -p /mnt/us/documents/kanki
+cp -r "$TEMP_DIR/kanki"/* /mnt/us/documents/kanki/
 chmod +x /mnt/us/documents/kanki/kanki.sh
+
+rm -rf "$TEMP_DIR"
+
 echo "kanki package installed successfully."
