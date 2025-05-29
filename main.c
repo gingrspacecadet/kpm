@@ -241,33 +241,45 @@ int install_from_mirrors(const char *pkg) {
 }
 
 int main(int argc, char *argv[]) {
-    load_config(CONFIG_DIR);
+    const char *prog = argv[0];
 
-    // Incorrect usage
+    // 1) Usage check first:
     if (argc != 3 || strcmp(argv[1], "-S") != 0) {
-        fprintf(stderr, "Usage: %s -S <package>\n", argv[0]);
+        fprintf(stderr, "Usage: %s -S <package>\n", prog);
         return 1;
     }
 
+    // 2) Now load config
+    load_config(CONFIG_DIR);
+
     const char *pkg = argv[2];
 
-    // Check if package is already installed
+    // 3) Already-installed check
     if (find_in_list(INSTALLED_LIST, pkg)) {
-        printf("Package '%s' is already installed (listed in %s).\n", pkg, INSTALLED_LIST);
+        printf("Package '%s' is already installed (listed in %s).\n",
+               pkg, INSTALLED_LIST);
         return 0;
     }
 
-    if (install_from_mirrors(pkg)) {
-        printf("Successfully installed %s\n", pkg);
-        FILE *installed = fopen(INSTALLED_LIST, "a");
-        if (installed) {
-            fprintf(installed, "%s\n", pkg);
-            fclose(installed);
-        } else {
-            fprintf(stderr, "Warning: could not write to %s: %s\n", INSTALLED_LIST, strerror(errno));
-        }
-        return 0;
+    // 4) Fetch & install
+    if (!install_from_mirrors(pkg)) {
+        // install_from_mirrors prints its own errors
+        return 1;
     }
 
-    return 1;
+    printf("Successfully installed %s\n", pkg);
+
+    // 5) Append to installed list
+    FILE *f = fopen(INSTALLED_LIST, "a");
+    if (!f) {
+        fprintf(stderr,
+                "Warning: could not write to %s: %s\n",
+                INSTALLED_LIST, strerror(errno));
+        // still return success, since the package is installed
+        return 0;
+    }
+    fprintf(f, "%s\n", pkg);
+    fclose(f);
+
+    return 0;
 }
