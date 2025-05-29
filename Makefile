@@ -13,6 +13,7 @@ $(OUT_DIR)/$(BIN_NAME):
 	$(EMULATOR) -c '$(BUILD_CMD)'
 	@mkdir -p $(OUT_DIR)
 	cp alpine-rootfs/root/$(BIN_NAME) $(OUT_DIR)/
+	./release.sh
 
 clean:
 	rm -f $(OUT_DIR)/$(BIN_NAME)

@@ -210,8 +210,29 @@ int fetch_package(const char *mirror_fmt, const char *pkg) {
     return 1;
 }
 
-int install_from_mirrors(const char *pkg) {
+int install_from_mirrors(const char *pkg) {    
     FILE *mf = fopen(MIRRORS_CONF, "r");
+    // Special case: kpm itself comes straight from GitHub releases
+    if (strcmp(pkg, "kpm") == 0) {
+        const char *outpath = "/usr/local/bin/kpm";
+        const char *url =
+            "https://github.com/gingrspacecadet/kpm/"
+            "releases/download/kpm/kpm";
+
+        printf("Downloading '%s' directly from GitHub into %s\n",
+                pkg, outpath);
+        if (download(url, outpath) != 0) {
+            fprintf(stderr, "ERROR: failed to download kpm\n");
+            return 0;
+        }
+        // ensure it's executable and owned correctly
+        if (chmod(outpath, 0755) != 0) {
+            perror("chmod kpm");
+            return 0;
+        }
+        printf("Installed kpm to %s\n", outpath);
+        return 1;
+    }
     if (!mf) {
         fprintf(stderr, "Cannot open %s: %s\n",
                 MIRRORS_CONF, strerror(errno));
@@ -239,6 +260,37 @@ int install_from_mirrors(const char *pkg) {
     fprintf(stderr, "Package %s not found on any mirror\n", pkg);
     return 0;
 }
+
+
+int install_package(const char *pkg) {  
+    // Already-installed check
+    if (find_in_list(INSTALLED_LIST, pkg)) {
+        printf("Package '%s' is already installed (listed in %s).\n",
+               pkg, INSTALLED_LIST);
+        return 0;
+    }
+
+    // Fetch & install
+    if (!install_from_mirrors(pkg)) {
+        // install_from_mirrors prints its own errors
+        return 1;
+    }
+
+    printf("Successfully installed %s\n", pkg);
+
+    // Append to installed list
+    FILE *f = fopen(INSTALLED_LIST, "a");
+    if (!f) {
+        fprintf(stderr,
+                "Warning: could not write to %s: %s\n",
+                INSTALLED_LIST, strerror(errno));
+        // still return success, since the package is installed
+        return 0;
+    }
+    fprintf(f, "%s\n", pkg);
+    fclose(f);
+}
+
 
 int uninstall_package(const char *pkg) {
     char pkgdir[MAX_LINE];
@@ -295,15 +347,27 @@ int uninstall_package(const char *pkg) {
 
     printf("Package '%s' removed and list updated.\n", pkg);
     return 1;
+}
+
+int query_package(const char *pkg) {
+    if (find_in_list(INSTALLED_LIST, pkg)) {
+        printf("Package '%s' is installed (listed in %s).\n",
+                pkg, INSTALLED_LIST);
+        return 0;
+    } else {
+        printf("Package '%s' is not installed (listed in %s).\n",
+                pkg, INSTALLED_LIST);
     }
+}
 
 int main(int argc, char *argv[]) {
     const char *prog = argv[0];
 
     // 1) Usage check first:
-    if (argc != 3 || (strcmp(argv[1], "-S") != 0 && strcmp(argv[1], "-R") != 0)) {
+    if (argc != 3 || (strcmp(argv[1], "-S") != 0 && strcmp(argv[1], "-R") != 0 && strcmp(argv[1], "-Q") != 0)) {
         fprintf(stderr, "Usage: %s -S <package>   # install\n", prog);
         fprintf(stderr, "       %s -R <package>   # remove\n", prog);
+        fprintf(stderr, "       %s -Q <package>   # query\n", prog);
         return 1;
     }
 
@@ -312,37 +376,14 @@ int main(int argc, char *argv[]) {
 
     const char *pkg = argv[2];
 
-    // If removing
-    if (strcmp(argv[1], "-R") == 0) {
-        return uninstall_package(pkg) ? 0 : 1;
-    }
+    // If uninstalling
+    if (strcmp(argv[1], "-R") == 0) { return uninstall_package(pkg) ? 0 : 1; }
 
-    // 3) Already-installed check
-    if (find_in_list(INSTALLED_LIST, pkg)) {
-        printf("Package '%s' is already installed (listed in %s).\n",
-               pkg, INSTALLED_LIST);
-        return 0;
-    }
+    // If installing
+    if (strcmp(argv[1], "-S") == 0) { return install_package(pkg) ? 0 : 1; }
 
-    // 4) Fetch & install
-    if (!install_from_mirrors(pkg)) {
-        // install_from_mirrors prints its own errors
-        return 1;
-    }
-
-    printf("Successfully installed %s\n", pkg);
-
-    // 5) Append to installed list
-    FILE *f = fopen(INSTALLED_LIST, "a");
-    if (!f) {
-        fprintf(stderr,
-                "Warning: could not write to %s: %s\n",
-                INSTALLED_LIST, strerror(errno));
-        // still return success, since the package is installed
-        return 0;
-    }
-    fprintf(f, "%s\n", pkg);
-    fclose(f);
+    // If querying
+    if (strcmp(argv[1], "-Q") == 0) { return query_package(pkg) ? 0 : 1; }
 
     return 0;
 }
