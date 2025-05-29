@@ -8,9 +8,9 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define MAX_LINE 512
-#define CMD        "wget -q -O %s \"%s\""
-#define CONFIG_DIR "/etc/kpm/kpm.conf"
+#define MAX_LINE       512
+#define CMD            "wget -q -O %s \"%s\""
+#define CONFIG_DIR     "/etc/kpm/kpm.conf"
 #define INSTALLED_LIST "/mnt/us/kpm/package_list.conf"
 
 // These will be filled in by load_config()
@@ -51,10 +51,12 @@ void load_config(const char *path) {
     fclose(file);
 }
 
-// Download URL to local path using wget 
+// Download URL to local path using curl (follows redirects, quiet, fails safely)
 int download(const char *url, const char *outpath) {
     char cmd[1024];
-    snprintf(cmd, sizeof(cmd), CMD, outpath, url);
+    // -f: fail on HTTP error, -s: silent, -S: show errors, -L: follow redirects
+    snprintf(cmd, sizeof(cmd),
+             "curl -fsSL \"%s\" -o \"%s\"", url, outpath);
     return system(cmd);
 }
 
@@ -211,47 +213,7 @@ int fetch_package(const char *mirror_fmt, const char *pkg) {
 }
 
 int install_from_mirrors(const char *pkg) {    
-    FILE *mf = fopen(MIRRORS_CONF, "r");
-    // Special case: kpm itself comes straight from GitHub releases
-    if (strcmp(pkg, "kpm") == 0) {
-        const char *url =
-            "https://github.com/gingrspacecadet/kpm/"
-            "releases/download/kpm/kpm";
-        const char *orig = "/usr/local/bin/kpm";
-        char tmp[MAX_LINE];
-        snprintf(tmp, sizeof(tmp), "%s.new", orig);  // "/usr/local/bin/kpm.new"
-
-        printf("Downloading new kpm binary to %s …\n", tmp);
-        if (download(url, tmp) != 0) {
-            fprintf(stderr, "ERROR: failed to download kpm\n");
-            return 0;
-        }
-        if (chmod(tmp, 0755) != 0) {
-            perror("chmod new kpm");
-            return 0;
-        }
-
-        // Spawn a helper to rename new → orig after this process exits
-        pid_t pid = fork();
-        if (pid < 0) {
-            perror("fork");
-            return 0;
-        }
-        if (pid == 0) {
-            // child
-            sleep(1);  // give parent time to exit
-            if (rename(tmp, orig) != 0) {
-                perror("self-update rename");
-                _exit(1);
-            }
-            printf("✔ kpm binary updated at %s\n", orig);
-            _exit(0);
-        }
-
-        // parent returns success so kpm can exit immediately
-        printf("✔ Download complete. kpm will update itself shortly.\n");
-        return 1;
-    }
+    FILE *mf = fopen(MIRRORS_CONF, "r");    
     if (!mf) {
         fprintf(stderr, "Cannot open %s: %s\n",
                 MIRRORS_CONF, strerror(errno));
@@ -281,35 +243,26 @@ int install_from_mirrors(const char *pkg) {
 }
 
 
-int install_package(const char *pkg) {  
-    // Already-installed check
+int install_package(const char *pkg) {
     if (find_in_list(INSTALLED_LIST, pkg)) {
-        printf("Package '%s' is already installed (listed in %s).\n",
-               pkg, INSTALLED_LIST);
-        return 0;
-    }
-
-    // Fetch & install
-    if (!install_from_mirrors(pkg)) {
-        // install_from_mirrors prints its own errors
+        printf("Package '%s' already installed.\n", pkg);
         return 1;
     }
-
+    if (!install_from_mirrors(pkg)) {
+        return 0;
+    }
     printf("Successfully installed %s\n", pkg);
 
-    // Append to installed list
-    if (pkg != 'kpm') {
+    // don’t record kpm itself
+    if (strcmp(pkg, "kpm") != 0) {
         FILE *f = fopen(INSTALLED_LIST, "a");
-        if (!f) {
-            fprintf(stderr,
-                    "Warning: could not write to %s: %s\n",
-                    INSTALLED_LIST, strerror(errno));
-            // still return success, since the package is installed
-            return 0;
+        if (f) {
+            fprintf(f, "%s\n", pkg);
+            fclose(f);
         }
-        fprintf(f, "%s\n", pkg);
-        fclose(f);
     }
+
+    return 1;
 }
 
 
@@ -445,40 +398,27 @@ void usage(const char *prog) {
 
 
 int main(int argc, char *argv[]) {
-    const char *prog = argv[0];
+    if (argc!=3 || argv[1][0]!='-' || argv[1][1]=='\0')
+        usage(argv[0]);
 
-    // Must be exactly: prog  OPT  PACKAGE
-    if (argc != 3 || argv[1][0] != '-' || argv[1][1] == '\0') {
-        usage(prog);
-    }
-
-    // Load config now (so all subcommands have access)
     load_config(CONFIG_DIR);
 
-    char op    = argv[1][1];   // 'S', 'R', 'Q', ...
-    char subop = argv[1][2];   // e.g. 'r' for "-Qr", '\0' if none
+    char op    = argv[1][1];
+    char subop = argv[1][2];  // '\0' if none
     const char *pkg = argv[2];
 
     switch (op) {
-      case 'S':  // install
-        if (subop != '\0') usage(prog);
+      case 'S':
+        if (subop) usage(argv[0]);
         return do_install(pkg);
-
-      case 'R':  // remove
-        if (subop != '\0') usage(prog);
+      case 'R':
+        if (subop) usage(argv[0]);
         return do_remove(pkg);
-
-      case 'Q':  // query
-        if (subop == '\0') {
-            fprintf(stderr, "`-Q` requires a sub-op, e.g. `-Qr` or `-Ql`\n");
-            usage(prog);
-        }
-
+      case 'Q':
+        if (!subop) usage(argv[0]);
         return do_query(subop, pkg);
-
       default:
-        usage(prog);
+        usage(argv[0]);
     }
-
-    return 1; // unreachable
+    return 1;  // never reached
 }
