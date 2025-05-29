@@ -279,16 +279,18 @@ int install_package(const char *pkg) {
     printf("Successfully installed %s\n", pkg);
 
     // Append to installed list
-    FILE *f = fopen(INSTALLED_LIST, "a");
-    if (!f) {
-        fprintf(stderr,
-                "Warning: could not write to %s: %s\n",
-                INSTALLED_LIST, strerror(errno));
-        // still return success, since the package is installed
-        return 0;
+    if (pkg != 'kpm') {
+        FILE *f = fopen(INSTALLED_LIST, "a");
+        if (!f) {
+            fprintf(stderr,
+                    "Warning: could not write to %s: %s\n",
+                    INSTALLED_LIST, strerror(errno));
+            // still return success, since the package is installed
+            return 0;
+        }
+        fprintf(f, "%s\n", pkg);
+        fclose(f);
     }
-    fprintf(f, "%s\n", pkg);
-    fclose(f);
 }
 
 
