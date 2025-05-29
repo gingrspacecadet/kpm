@@ -149,9 +149,16 @@ int fetch_package(const char *mirror_fmt, const char *pkg) {
     const char *dot = slash ? strrchr(slash, '.') : NULL;
     const char *suffix = dot ? dot : "";
 
+    if (strcmp(pkg, "kpm") == 0) {
+        char *last_dot = strrchr(url, '.');
+        if (last_dot && last_dot > strrchr(url, '/')) {
+            *last_dot = '\0'; // Truncate the URL at the last dot
+        }
+    }
+
     // Paths
     snprintf(outpath, sizeof(outpath), "%s/%s%s", INSTALL_DIR, pkg, suffix);
-    snprintf(pkgdir,  sizeof(pkgdir),  "%s/%s",    INSTALL_DIR, pkg);
+    snprintf(pkgdir,  sizeof(pkgdir),  "%s/%s", INSTALL_DIR, pkg);
 
     // Create directories
     if (ensure_dir(INSTALL_DIR, 0755) ||
@@ -166,47 +173,49 @@ int fetch_package(const char *mirror_fmt, const char *pkg) {
         return 0;
     }
 
-    // Extract
-    if (strstr(suffix, ".zip")) {
-        char *const args[] = { "unzip", "-o", outpath, "-d", pkgdir, NULL };
-        printf("Extracting ZIP...\n");
-        if (run_cmd(args) < 0) return 0;
-    }
-    else if (strstr(suffix, ".tar.gz")) {
-        char *const args[] = { "tar", "-xzf", outpath, "-C", pkgdir, NULL };
-        printf("Extracting tar.gz...\n");
-        if (run_cmd(args) < 0) return 0;
-    }
-    else if (strstr(suffix, ".tar.xz")) {
-        char *const args[] = { "tar", "-xJf", outpath, "-C", pkgdir, NULL };
-        printf("Extracting tar.xz...\n");
-        if (run_cmd(args) < 0) return 0;
-    }
-    else {
-        fprintf(stderr, "Unknown archive format: %s\n", suffix);
-        return 0;
-    }
+    // Extract (skip for kpm, which is not an archive)
+    if (strcmp(pkg, "kpm") != 0) {
+        if (strstr(suffix, ".zip")) {
+            char *const args[] = { "unzip", "-o", outpath, "-d", pkgdir, NULL };
+            printf("Extracting ZIP...\n");
+            if (run_cmd(args) < 0) return 0;
+        }
+        else if (strstr(suffix, ".tar.gz")) {
+            char *const args[] = { "tar", "-xzf", outpath, "-C", pkgdir, NULL };
+            printf("Extracting tar.gz...\n");
+            if (run_cmd(args) < 0) return 0;
+        }
+        else if (strstr(suffix, ".tar.xz")) {
+            char *const args[] = { "tar", "-xJf", outpath, "-C", pkgdir, NULL };
+            printf("Extracting tar.xz...\n");
+            if (run_cmd(args) < 0) return 0;
+        }
+        else {
+            fprintf(stderr, "Unknown archive format: %s\n", suffix);
+            return 0;
+        }
 
-    // install.sh
-    char script[MAX_LINE];
-    snprintf(script, sizeof(script), "%s/install.sh", pkgdir);
-    if (access(script, F_OK) != 0) {
-        fprintf(stderr, "Error: install.sh not found in %s\n", pkgdir);
-        return 0;
-    }
+        // install.sh
+        char script[MAX_LINE];
+        snprintf(script, sizeof(script), "%s/install.sh", pkgdir);
+        if (access(script, F_OK) != 0) {
+            fprintf(stderr, "Error: install.sh not found in %s\n", pkgdir);
+            return 0;
+        }
 
-    // Make it executable
-    if (chmod(script, 0755) != 0) {
-        perror("chmod install.sh");
-        return 0;
-    }
+        // Make it executable
+        if (chmod(script, 0755) != 0) {
+            perror("chmod install.sh");
+            return 0;
+        }
 
-    // Run it directly
-    printf("Running install script: %s\n", script);
-    char *const runargs[] = { script, NULL };
-    if (run_cmd(runargs) < 0) {
-        fprintf(stderr, "install.sh failed\n");
-        return 0;
+        // Run it directly
+        printf("Running install script: %s\n", script);
+        char *const runargs[] = { script, NULL };
+        if (run_cmd(runargs) < 0) {
+            fprintf(stderr, "install.sh failed\n");
+            return 0;
+        }
     }
 
     return 1;
@@ -232,7 +241,24 @@ int install_from_mirrors(const char *pkg) {
         if (find_in_list(TMP_LIST_FILE, pkg)) {
             printf("  %s found; fetching package...\n", pkg);
             fclose(mf);
-            return fetch_package(pkg_fmt, pkg);
+            int result = fetch_package(pkg_fmt, pkg);
+
+            if (result && strcmp(pkg, "kpm") == 0) {
+                // Replace /usr/local/bin/kpm with /mnt/us/kpm/packages/kpm
+                char *const cp_argv[] = {
+                    "cp",
+                    "/mnt/us/kpm/packages/kpm",
+                    "/usr/local/bin/kpm",
+                    NULL
+                };
+                printf("Replacing /usr/local/bin/kpm with the new binary...\n");
+                if (run_cmd(cp_argv) != 0) {
+                    fprintf(stderr, "Failed to replace kpm binary\n");
+                    return 0;
+                }
+            }
+
+            return result;
         } else {
             printf("  %s not here; next mirror\n", pkg);
         }

@@ -1,5 +1,6 @@
 #!/bin/sh
 set -euo pipefail
+mntroot rw
 
 # Remove old files
 if [ -f /usr/local/bin/kpm ]; then
@@ -16,7 +17,7 @@ wget https://github.com/gingrspacecadet/kpm/releases/download/kpm/kpm -O /usr/lo
 chmod +x /usr/local/bin/kpm
 
 # Installed packages list
-mkdir /mnt/us/kpm
+mkdir -p /mnt/us/kpm
 touch /mnt/us/kpm/package_list.conf
 
 # Config files
