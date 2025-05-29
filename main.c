@@ -214,6 +214,7 @@ int install_from_mirrors(const char *pkg) {
     FILE *mf = fopen(MIRRORS_CONF, "r");
     // Special case: kpm itself comes straight from GitHub releases
     if (strcmp(pkg, "kpm") == 0) {
+        run_cmd('rm /usr/local/bin/kpm');
         const char *outpath = "/usr/local/bin/kpm";
         const char *url =
             "https://github.com/gingrspacecadet/kpm/"
