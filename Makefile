@@ -1,7 +1,7 @@
 EMULATOR := ./enter-kindle.sh
 OUT_DIR := out
 BIN_NAME := kpm
-SRC_PATH := /kpm-main/main.c
+SRC_PATH := /main.c
 BUILD_CMD := gcc -static -o /root/$(BIN_NAME) $(SRC_PATH)
 
 .PHONY: all clean move
@@ -10,6 +10,7 @@ all: $(OUT_DIR)/$(BIN_NAME)
 
 $(OUT_DIR)/$(BIN_NAME):
 	@echo "[*] Building in emulated environment..."
+	cp main.c alpine-rootfs/
 	$(EMULATOR) -c '$(BUILD_CMD)'
 	@mkdir -p $(OUT_DIR)
 	cp alpine-rootfs/root/$(BIN_NAME) $(OUT_DIR)/

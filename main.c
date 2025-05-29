@@ -160,10 +160,16 @@ int fetch_package(const char *mirror_fmt, const char *pkg) {
     snprintf(outpath, sizeof(outpath), "%s/%s%s", INSTALL_DIR, pkg, suffix);
     snprintf(pkgdir,  sizeof(pkgdir),  "%s/%s", INSTALL_DIR, pkg);
 
-    // Create directories
-    if (ensure_dir(INSTALL_DIR, 0755) ||
-        ensure_dir(pkgdir,      0755)) {
+    // Always ensure INSTALL_DIR exists...
+    if (ensure_dir(INSTALL_DIR, 0755)) {
         return 0;
+    }
+
+    // But don’t make a sub‐dir for "kpm", or it blocks curl
+    if (strcmp(pkg, "kpm") != 0) {
+        if (ensure_dir(pkgdir, 0755)) {
+            return 0;
+        }
     }
 
     // Download archive
