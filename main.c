@@ -9,61 +9,47 @@
 #include <unistd.h>
 
 #define MAX_LINE 512
+#define CMD        "wget -q -O %s \"%s\""
+#define CONFIG_DIR "/etc/kpm/kpm.conf"
+#define INSTALLED_LIST "/mnt/us/kpm/package_list.conf"
 
-#ifdef _WIN32
-    #include <io.h>
-    #define access    _access
-    #define F_OK      0
-    #define CMD       "powershell -NoProfile -Command \"$wc = New-Object System.Net.WebClient; $wc.DownloadFile('%s','%s')\""
-    #define CONFIG_DIR "C:\\dev\\kpm\\kpm.conf"
+// These will be filled in by load_config()
+char INSTALL_DIR[MAX_LINE];
+char MIRRORS_CONF[MAX_LINE];
+char TMP_LIST_FILE[MAX_LINE];
 
-    // On Windows we use fixed paths
-    static const char *INSTALL_DIR   = "C:\\dev\\kpm\\downloads";
-    static const char *MIRRORS_CONF  = "C:\\dev\\kpm\\kpm_mirrors.conf";
-    static const char *TMP_LIST_FILE = "C:\\dev\\kpm\\kpm_packages.conf";
-#else
-    #include <unistd.h>
-    #define CMD        "wget -q -O %s \"%s\""
-    #define CONFIG_DIR "/etc/kpm/kpm.conf"
-
-    // On Unix, these will be filled in by load_config()
-    char INSTALL_DIR[MAX_LINE];
-    char MIRRORS_CONF[MAX_LINE];
-    char TMP_LIST_FILE[MAX_LINE];
-
-    void load_config(const char *path) {
-        FILE *file = fopen(path, "r");
-        if (!file) {
-            fprintf(stderr, "Failed to open config file: %s: %s\n",
-                    path, strerror(errno));
-            exit(1);
-        }
-
-        char line[MAX_LINE];
-        while (fgets(line, sizeof(line), file)) {
-            // strip CR/LF
-            line[strcspn(line, "\r\n")] = '\0';
-
-            // skip empty or comment
-            if (line[0]=='\0' || line[0]=='#') continue;
-            char *eq = strchr(line, '=');
-            if (!eq) continue;
-
-            *eq = '\0';
-            char *key = line;
-            char *val = eq + 1;
-
-            if (strcmp(key, "INSTALL_DIR") == 0) {
-                strncpy(INSTALL_DIR, val, MAX_LINE-1);
-            } else if (strcmp(key, "MIRRORS_CONF") == 0) {
-                strncpy(MIRRORS_CONF, val, MAX_LINE-1);
-            } else if (strcmp(key, "TMP_LIST_FILE") == 0) {
-                strncpy(TMP_LIST_FILE, val, MAX_LINE-1);
-            }
-        }
-        fclose(file);
+void load_config(const char *path) {
+    FILE *file = fopen(path, "r");
+    if (!file) {
+        fprintf(stderr, "Failed to open config file: %s: %s\n",
+                path, strerror(errno));
+        exit(1);
     }
-#endif
+
+    char line[MAX_LINE];
+    while (fgets(line, sizeof(line), file)) {
+        // strip CR/LF
+        line[strcspn(line, "\r\n")] = '\0';
+
+        // skip empty or comment
+        if (line[0]=='\0' || line[0]=='#') continue;
+        char *eq = strchr(line, '=');
+        if (!eq) continue;
+
+        *eq = '\0';
+        char *key = line;
+        char *val = eq + 1;
+
+        if (strcmp(key, "INSTALL_DIR") == 0) {
+            strncpy(INSTALL_DIR, val, MAX_LINE-1);
+        } else if (strcmp(key, "MIRRORS_CONF") == 0) {
+            strncpy(MIRRORS_CONF, val, MAX_LINE-1);
+        } else if (strcmp(key, "TMP_LIST_FILE") == 0) {
+            strncpy(TMP_LIST_FILE, val, MAX_LINE-1);
+        }
+    }
+    fclose(file);
+}
 
 // Download URL to local path using wget 
 int download(const char *url, const char *outpath) {
@@ -255,19 +241,33 @@ int install_from_mirrors(const char *pkg) {
 }
 
 int main(int argc, char *argv[]) {
-    #ifndef _WIN32
-        // Load config on Unix
-        load_config(CONFIG_DIR);
-    #endif
+    load_config(CONFIG_DIR);
 
+    // Incorrect usage
     if (argc != 3 || strcmp(argv[1], "-S") != 0) {
         fprintf(stderr, "Usage: %s -S <package>\n", argv[0]);
         return 1;
     }
 
-    if (install_from_mirrors(argv[2])) {
-        printf("Successfully installed %s\n", argv[2]);
+    const char *pkg = argv[2];
+
+    // Check if package is already installed
+    if (find_in_list(INSTALLED_LIST, pkg)) {
+        printf("Package '%s' is already installed (listed in %s).\n", pkg, INSTALLED_LIST);
         return 0;
     }
+
+    if (install_from_mirrors(pkg)) {
+        printf("Successfully installed %s\n", pkg);
+        FILE *installed = fopen(INSTALLED_LIST, "a");
+        if (installed) {
+            fprintf(installed, "%s\n", pkg);
+            fclose(installed);
+        } else {
+            fprintf(stderr, "Warning: could not write to %s: %s\n", INSTALLED_LIST, strerror(errno));
+        }
+        return 0;
+    }
+
     return 1;
 }
