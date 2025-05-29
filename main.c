@@ -387,7 +387,7 @@ int query_package_remote(const char *pkg) {
             fprintf(stderr, "  [!] Failed to download list from %s\n", list_url);
             continue;
         }
-
+        
         if (find_in_list(TMP_LIST_FILE, pkg)) {
             printf("  [v] Package '%s' is available on %s\n", pkg, list_url);
             found_any = 1;
@@ -395,15 +395,42 @@ int query_package_remote(const char *pkg) {
             printf("  [x] Package '%s' not on %s\n", pkg, list_url);
         }
     }
-
+    
     fclose(mf);
-
+    
     if (!found_any) {
         printf("Package '%s' is not available on any configured mirror.\n", pkg);
         return 1;
     }
-
+    
     return 0;
+}
+
+void help(char op) {
+    switch (op) {
+        case 'Q':
+            fprintf(stderr,
+                "Usage:\n"
+                "  -l     # list local packages\n"
+                "  -r     # list remote packages\n" );
+            break;
+        case 'S':
+            fprintf(stderr,
+                "Usage:\n" );
+            break;
+        case 'R':
+            fprintf(stderr,
+                "Usage:\n" );
+            break;
+        default:
+            fprintf(stderr,
+                "Usage:\n"
+                "  kpm -S <package>     # install\n"
+                "  kpm -R <package>     # remove\n"
+                "  kpm -Q <package>     # query\n" );
+            break;
+    }
+    exit(1);
 }
 
 int do_install(const char *pkg) {
@@ -413,25 +440,20 @@ int do_remove(const char *pkg) {
     return uninstall_package(pkg) ? 0 : 1;
 }
 int do_query(char subop, const char *pkg) {
-    if (subop == 'l') { return query_package_local(pkg) ? 0 : 1; }
-    if (subop == 'r') { return query_package_remote(pkg) ? 0 : 1; }
+    switch (subop) {
+        case 'l':
+            return query_package_local(pkg) ? 0 : 1; 
+        case 'r':
+            return query_package_remote(pkg) ? 0 : 1;
+        case 'h':
+            help('Q');
+            return 0; 
+    }
 }
-
-void usage(const char *prog) {
-    fprintf(stderr,
-        "Usage:\n"
-        "  %1$s -S <package>     # install\n"
-        "  %1$s -R <package>     # remove\n"
-        "  %1$s -Qr <package>    # query remote\n"
-        "  %1$s -Ql <package>    # query local\n"
-        , prog);
-    exit(1);
-}
-
 
 int main(int argc, char *argv[]) {
-    if (argc!=3 || argv[1][0]!='-' || argv[1][1]=='\0')
-        usage(argv[0]);
+    if (argc!=2 || argv[1][0]!='-' || argv[1][1]=='\0')
+        help((char)"\0");
 
     load_config(CONFIG_DIR);
 
@@ -441,16 +463,16 @@ int main(int argc, char *argv[]) {
 
     switch (op) {
       case 'S':
-        if (subop) usage(argv[0]);
+        if (subop) help(op);
         return do_install(pkg);
       case 'R':
-        if (subop) usage(argv[0]);
+        if (subop) help(op);
         return do_remove(pkg);
       case 'Q':
-        if (!subop) usage(argv[0]);
+        if (!subop) help(op);
         return do_query(subop, pkg);
       default:
-        usage(argv[0]);
+        help(op);
     }
     return 1;  // never reached
 }
