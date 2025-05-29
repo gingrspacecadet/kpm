@@ -9,7 +9,6 @@
 #include <unistd.h>
 
 #define MAX_LINE       512
-#define CMD            "wget -q -O %s \"%s\""
 #define CONFIG_DIR     "/etc/kpm/kpm.conf"
 #define INSTALLED_LIST "/mnt/us/kpm/package_list.conf"
 
@@ -356,13 +355,32 @@ int uninstall_package(const char *pkg) {
 }
 
 int query_package_local(const char *pkg) {
-    if (find_in_list(INSTALLED_LIST, pkg)) {
-        printf("Package '%s' is installed (listed in %s).\n",
-                pkg, INSTALLED_LIST);
-        return 0;
+    if (pkg != NULL) {
+        if (find_in_list(INSTALLED_LIST, pkg)) {
+            printf("Package '%s' is installed (listed in %s).\n",
+                    pkg, INSTALLED_LIST);
+            return 0;
+        } else {
+            printf("Package '%s' is not installed (listed in %s).\n",
+                    pkg, INSTALLED_LIST);
+        }
     } else {
-        printf("Package '%s' is not installed (listed in %s).\n",
-                pkg, INSTALLED_LIST);
+        // Print all installed packages
+        FILE *f = fopen(INSTALLED_LIST, "r");
+        if (!f) {
+            fprintf(stderr, "Failed to open installed list '%s': %s\n",
+                    INSTALLED_LIST, strerror(errno));
+            return;  // or return an error code, depending on your function signature
+        }
+
+        printf("Installed packages:\n");
+        char line[MAX_LINE];
+        while (fgets(line, sizeof(line), f)) {
+            // fgets() keeps the newline, so this prints one package per line
+            printf("  %s", line);
+        }
+
+        fclose(f);
     }
 }
 
@@ -388,17 +406,34 @@ int query_package_remote(const char *pkg) {
             continue;
         }
         
-        if (find_in_list(TMP_LIST_FILE, pkg)) {
-            printf("  [v] Package '%s' is available on %s\n", pkg, list_url);
-            found_any = 1;
+        if (pkg != NULL) {
+            if (find_in_list(TMP_LIST_FILE, pkg)) {
+                printf("  [v] Package '%s' is available on %s\n", pkg, list_url);
+                found_any = 1;
+            } else {
+                printf("  [x] Package '%s' not on %s\n", pkg, list_url);
+            }
         } else {
-            printf("  [x] Package '%s' not on %s\n", pkg, list_url);
+            printf("Packages on %s:\n", list_url);
+
+            FILE *f = fopen(TMP_LIST_FILE, "r");
+            if (!f) {
+                fprintf(stderr, "  Failed to open list '%s': %s\n",
+                        TMP_LIST_FILE, strerror(errno));
+            } else {
+                char line[MAX_LINE];
+                while (fgets(line, sizeof(line), f)) {
+                    // fgets() includes the newline, so it prints one package per line
+                    printf("  %s", line);
+                }
+                fclose(f);
+            }
         }
     }
     
     fclose(mf);
     
-    if (!found_any) {
+    if (!found_any && pkg != NULL) {
         printf("Package '%s' is not available on any configured mirror.\n", pkg);
         return 1;
     }
@@ -452,7 +487,7 @@ int do_query(char subop, const char *pkg) {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc!=2 || argv[1][0]!='-' || argv[1][1]=='\0')
+    if (argc<2 || argv[1][0]!='-' || argv[1][1]=='\0')
         help((char)"\0");
 
     load_config(CONFIG_DIR);
@@ -463,10 +498,10 @@ int main(int argc, char *argv[]) {
 
     switch (op) {
       case 'S':
-        if (subop) help(op);
+        if (subop || argc!=3) help(op);
         return do_install(pkg);
       case 'R':
-        if (subop) help(op);
+        if (subop || argc<3) help(op);
         return do_remove(pkg);
       case 'Q':
         if (!subop) help(op);
