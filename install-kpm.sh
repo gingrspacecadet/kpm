@@ -1,6 +1,11 @@
 #!/bin/sh
 set -euo pipefail
 
+# Remove old files
+if [ -f /usr/local/bin/kpm ]; then
+  rm /usr/local/bin/kpm
+fi
+
 # Installation directories for compat
 mkdir -p /usr/local
 mkdir -p /usr/local/bin
