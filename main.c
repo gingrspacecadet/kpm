@@ -214,24 +214,42 @@ int install_from_mirrors(const char *pkg) {
     FILE *mf = fopen(MIRRORS_CONF, "r");
     // Special case: kpm itself comes straight from GitHub releases
     if (strcmp(pkg, "kpm") == 0) {
-        run_cmd('rm /usr/local/bin/kpm');
-        const char *outpath = "/usr/local/bin/kpm";
         const char *url =
             "https://github.com/gingrspacecadet/kpm/"
             "releases/download/kpm/kpm";
+        const char *orig = "/usr/local/bin/kpm";
+        char tmp[MAX_LINE];
+        snprintf(tmp, sizeof(tmp), "%s.new", orig);  // "/usr/local/bin/kpm.new"
 
-        printf("Downloading '%s' directly from GitHub into %s\n",
-                pkg, outpath);
-        if (download(url, outpath) != 0) {
+        printf("Downloading new kpm binary to %s …\n", tmp);
+        if (download(url, tmp) != 0) {
             fprintf(stderr, "ERROR: failed to download kpm\n");
             return 0;
         }
-        // ensure it's executable and owned correctly
-        if (chmod(outpath, 0755) != 0) {
-            perror("chmod kpm");
+        if (chmod(tmp, 0755) != 0) {
+            perror("chmod new kpm");
             return 0;
         }
-        printf("Installed kpm to %s\n", outpath);
+
+        // Spawn a helper to rename new → orig after this process exits
+        pid_t pid = fork();
+        if (pid < 0) {
+            perror("fork");
+            return 0;
+        }
+        if (pid == 0) {
+            // child
+            sleep(1);  // give parent time to exit
+            if (rename(tmp, orig) != 0) {
+                perror("self-update rename");
+                _exit(1);
+            }
+            printf("✔ kpm binary updated at %s\n", orig);
+            _exit(0);
+        }
+
+        // parent returns success so kpm can exit immediately
+        printf("✔ Download complete. kpm will update itself shortly.\n");
         return 1;
     }
     if (!mf) {
