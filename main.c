@@ -240,12 +240,70 @@ int install_from_mirrors(const char *pkg) {
     return 0;
 }
 
+int uninstall_package(const char *pkg) {
+    char pkgdir[MAX_LINE];
+    snprintf(pkgdir, sizeof(pkgdir), "%s/%s", INSTALL_DIR, pkg);
+
+    // 1) Run uninstall.sh
+    char script[MAX_LINE];
+    snprintf(script, sizeof(script), "%s/uninstall.sh", pkgdir);
+    if (access(script, F_OK) != 0) {
+        fprintf(stderr, "Error: uninstall.sh not found in %s\n", pkgdir);
+        return 0;
+    }
+    if (chmod(script, 0755) != 0) {
+        perror("chmod uninstall.sh");
+        return 0;
+    }
+    printf("Running uninstall script: %s\n", script);
+    char *const runargs[] = { script, NULL };
+    if (run_cmd(runargs) < 0) {
+        fprintf(stderr, "uninstall.sh failed\n");
+        return 0;
+    }
+
+    // 2) Remove from INSTALLED_LIST
+    FILE *in = fopen(INSTALLED_LIST, "r");
+    if (!in) {
+        perror("fopen INSTALLED_LIST");
+        return 0;
+    }
+    char tmp[MAX_LINE];
+    snprintf(tmp, sizeof(tmp), "%s.tmp", INSTALLED_LIST);
+    FILE *out = fopen(tmp, "w");
+    if (!out) {
+        perror("fopen tmp list");
+        fclose(in);
+        return 0;
+    }
+
+    char line[MAX_LINE];
+    while (fgets(line, sizeof(line), in)) {
+        // strip newline
+        line[strcspn(line, "\r\n")] = '\0';
+        if (strcmp(line, pkg) != 0) {
+            fprintf(out, "%s\n", line);
+        }
+    }
+    fclose(in);
+    fclose(out);
+
+    if (rename(tmp, INSTALLED_LIST) != 0) {
+        perror("rename list");
+        return 0;
+    }
+
+    printf("Package '%s' removed and list updated.\n", pkg);
+    return 1;
+    }
+
 int main(int argc, char *argv[]) {
     const char *prog = argv[0];
 
     // 1) Usage check first:
-    if (argc != 3 || strcmp(argv[1], "-S") != 0) {
-        fprintf(stderr, "Usage: %s -S <package>\n", prog);
+    if (argc != 3 || (strcmp(argv[1], "-S") != 0 && strcmp(argv[1], "-R") != 0)) {
+        fprintf(stderr, "Usage: %s -S <package>   # install\n", prog);
+        fprintf(stderr, "       %s -R <package>   # remove\n", prog);
         return 1;
     }
 
@@ -253,6 +311,11 @@ int main(int argc, char *argv[]) {
     load_config(CONFIG_DIR);
 
     const char *pkg = argv[2];
+
+    // If removing
+    if (strcmp(argv[1], "-R") == 0) {
+        return uninstall_package(pkg) ? 0 : 1;
+    }
 
     // 3) Already-installed check
     if (find_in_list(INSTALLED_LIST, pkg)) {
