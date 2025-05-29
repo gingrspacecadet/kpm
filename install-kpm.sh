@@ -13,7 +13,7 @@ mkdir -p /usr/local/bin
 
 # Download the kpm binary
 echo "Installing kpm to /usr/local/bin..."
-wget https://github.com/gingrspacecadet/kpm/releases/download/kpm/kpm -O /usr/local/bin/kpm
+curl -L https://github.com/gingrspacecadet/kpm/releases/download/kpm/kpm -o /usr/local/bin/kpm
 chmod +x /usr/local/bin/kpm
 
 # Installed packages list
