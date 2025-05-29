@@ -352,7 +352,7 @@ int uninstall_package(const char *pkg) {
     return 1;
 }
 
-int query_package(const char *pkg) {
+int query_package_local(const char *pkg) {
     if (find_in_list(INSTALLED_LIST, pkg)) {
         printf("Package '%s' is installed (listed in %s).\n",
                 pkg, INSTALLED_LIST);
@@ -363,30 +363,104 @@ int query_package(const char *pkg) {
     }
 }
 
-int main(int argc, char *argv[]) {
-    const char *prog = argv[0];
-
-    // 1) Usage check first:
-    if (argc != 3 || (strcmp(argv[1], "-S") != 0 && strcmp(argv[1], "-R") != 0 && strcmp(argv[1], "-Q") != 0)) {
-        fprintf(stderr, "Usage: %s -S <package>   # install\n", prog);
-        fprintf(stderr, "       %s -R <package>   # remove\n", prog);
-        fprintf(stderr, "       %s -Q <package>   # query\n", prog);
+int query_package_remote(const char *pkg) {
+    FILE *mf = fopen(MIRRORS_CONF, "r");
+    if (!mf) {
+        fprintf(stderr, "Cannot open mirrors config '%s': %s\n",
+                MIRRORS_CONF, strerror(errno));
         return 1;
     }
 
-    // 2) Now load config
-    load_config(CONFIG_DIR);
+    char line[MAX_LINE];
+    int found_any = 0;
+    while (fgets(line, sizeof(line), mf)) {
+        char list_url[MAX_LINE], pkg_fmt[MAX_LINE];
+        if (sscanf(line, "%s %s", list_url, pkg_fmt) != 2) {
+            continue;
+        }
 
-    const char *pkg = argv[2];
+        printf("Checking mirror: %s\n", list_url);
+        if (download(list_url, TMP_LIST_FILE) != 0) {
+            fprintf(stderr, "  [!] Failed to download list from %s\n", list_url);
+            continue;
+        }
 
-    // If uninstalling
-    if (strcmp(argv[1], "-R") == 0) { return uninstall_package(pkg) ? 0 : 1; }
+        if (find_in_list(TMP_LIST_FILE, pkg)) {
+            printf("  [v] Package '%s' is available on %s\n", pkg, list_url);
+            found_any = 1;
+        } else {
+            printf("  [x] Package '%s' not on %s\n", pkg, list_url);
+        }
+    }
 
-    // If installing
-    if (strcmp(argv[1], "-S") == 0) { return install_package(pkg) ? 0 : 1; }
+    fclose(mf);
 
-    // If querying
-    if (strcmp(argv[1], "-Q") == 0) { return query_package(pkg) ? 0 : 1; }
+    if (!found_any) {
+        printf("Package '%s' is not available on any configured mirror.\n", pkg);
+        return 1;
+    }
 
     return 0;
+}
+
+int do_install(const char *pkg) {
+    return install_package(pkg) ? 0 : 1;
+}
+int do_remove(const char *pkg) {
+    return uninstall_package(pkg) ? 0 : 1;
+}
+int do_query(char subop, const char *pkg) {
+    if (subop == 'l') { return query_package_local(pkg) ? 0 : 1; }
+    if (subop == 'r') { return query_package_remote(pkg) ? 0 : 1; }
+}
+
+void usage(const char *prog) {
+    fprintf(stderr,
+        "Usage:\n"
+        "  %1$s -S <package>     # install\n"
+        "  %1$s -R <package>     # remove\n"
+        "  %1$s -Qr <package>    # query remote\n"
+        "  %1$s -Ql <package>    # query local\n"
+        , prog);
+    exit(1);
+}
+
+
+int main(int argc, char *argv[]) {
+    const char *prog = argv[0];
+
+    // Must be exactly: prog  OPT  PACKAGE
+    if (argc != 3 || argv[1][0] != '-' || argv[1][1] == '\0') {
+        usage(prog);
+    }
+
+    // Load config now (so all subcommands have access)
+    load_config(CONFIG_DIR);
+
+    char op    = argv[1][1];   // 'S', 'R', 'Q', ...
+    char subop = argv[1][2];   // e.g. 'r' for "-Qr", '\0' if none
+    const char *pkg = argv[2];
+
+    switch (op) {
+      case 'S':  // install
+        if (subop != '\0') usage(prog);
+        return do_install(pkg);
+
+      case 'R':  // remove
+        if (subop != '\0') usage(prog);
+        return do_remove(pkg);
+
+      case 'Q':  // query
+        if (subop == '\0') {
+            fprintf(stderr, "`-Q` requires a sub-op, e.g. `-Qr` or `-Ql`\n");
+            usage(prog);
+        }
+
+        return do_query(subop, pkg);
+
+      default:
+        usage(prog);
+    }
+
+    return 1; // unreachable
 }
