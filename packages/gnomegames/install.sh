@@ -11,6 +11,7 @@ cp -r "$TEMP_DIR/gnomegames"/* /mnt/us/extensions/gnomegames
 
 echo "Installing to device..."
 cp "/mnt/us/extensions/gnomegames/shortcut_gnomechess.sh" "/mnt/us/documents"
+cp "/mnt/us/extensions/gnomegames/shortcut_gnomine.sh" "/mnt/us/documents"
 
 rm -rf "$TEMP_DIR"
 
