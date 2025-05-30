@@ -571,7 +571,7 @@ void help(char op) {
             "  --version     show version and exit\n");
     }
     
-    // … other cases for -S and -R if you like …
+    // ... other cases for -S and -R if you like ...
     exit(1);
 }
 

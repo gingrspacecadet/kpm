@@ -15,6 +15,10 @@ These individuals have created and maintained packages for the KPM ecosystem:
 - [Package Maintainer 2]: [Package Name]
 - [Package Maintainer 3]: [Package Name]
 
+## Misc contributors
+- [Serial-blocks](https://github.com/serial-blocks)
+
+
 ## How to Be Recognized
 
 All contributors to KPM are automatically recognized in this list. To contribute, please see our [contributing guidelines](/contributing).
