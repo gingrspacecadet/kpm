@@ -15,4 +15,4 @@ chmod +x install-kpm.sh
 ```
 
 ## Miscellaneous
-Check the wiki
+Check the [wiki](https://kpmwiki.vercel.app)
