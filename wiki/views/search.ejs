@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Search Results | KPMWiki</title>
+  <meta charset='utf-8'>
+  <meta property='og:title' content='Search Results | KPMWiki'>
+  <meta name='description' content='Search results on KPMWiki'>
+  <meta property='og:description' content='Search results on KPMWiki'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="/static/base.css">
+  <link rel="stylesheet" href="/static/sidebar.css">
+  <link rel="stylesheet" href="/static/prism.css">
+  <link rel="stylesheet" href="/static/mobile.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta name="theme-color" content="#343a40">
+</head>
+
+<body>
+  <div class="header">
+    <div class="header-title">
+      <a href="/">KPMWiki</a>
+    </div>
+    <div class="search-container">
+      <form action="/search" method="GET">
+        <input type="text" name="q" placeholder="Search..." class="search-input" value="<%= query || '' %>">
+        <button type="submit" class="search-button">
+          <i class="fas fa-search"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h3>Navigation</h3>
+      </div>
+      <div class="sidebar-content">
+        <ul class="nav-tree">
+          <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+
+          <% function renderNavigation(nav, currentPath, indent = 0) { %>
+            <% for (const key in nav) { %>
+              <% if (key !== '_files') { %>
+                <li class="folder">
+                  <div class="folder-header indent-<%= indent %>">
+                    <i class="fas fa-folder"></i>
+                    <span><%= key %></span>
+                  </div>
+                  <ul class="folder-content">
+                    <% if (nav[key]._files && nav[key]._files.length > 0) { %>
+                      <% nav[key]._files.forEach(file => { %>
+                        <li class="indent-<%= indent+1 %>">
+                          <a href="<%= file.url %>">
+                            <i class="fas fa-file-alt"></i> <%= file.name %>
+                          </a>
+                        </li>
+                      <% }) %>
+                    <% } %>
+                    <%= renderNavigation(nav[key], currentPath, indent + 1) %>
+                  </ul>
+                </li>
+              <% } %>
+            <% } %>
+            <% return '' %>
+          <% } %>
+
+          <% if (navigation && Object.keys(navigation).length > 0) { %>
+            <%= renderNavigation(navigation) %>
+          <% } %>
+
+          <!-- Root level files -->
+          <% if (navigation && navigation._files && navigation._files.length > 0) { %>
+            <% navigation._files.filter(file => file.name !== 'home').forEach(file => { %>
+              <li>
+                <a href="<%= file.url %>">
+                  <i class="fas fa-file-alt"></i> <%= file.name %>
+                </a>
+              </li>
+            <% }) %>
+          <% } %>
+        </ul>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="search-results">
+        <h1>Search Results</h1>
+        <p>Showing results for: <strong><%= query %></strong></p>
+
+        <% if (results.length === 0) { %>
+          <div class="no-results">
+            <p>No results found. Try a different search term.</p>
+          </div>
+        <% } else { %>
+          <div class="results-count">
+            <p>Found <%= results.length %> result<%= results.length !== 1 ? 's' : '' %></p>
+          </div>
+
+          <div class="results-list">
+            <% results.forEach(result => { %>
+              <div class="result-item">
+                <h3><a href="<%= result.url %>"><%= result.name %></a></h3>
+                <% if (result.folder) { %>
+                  <div class="result-path">
+                    <i class="fas fa-folder"></i> <%= result.folder %>
+                  </div>
+                <% } %>
+                <div class="result-context">
+                  <pre><code><%= result.context %></code></pre>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
+    <i class="fas fa-bars"></i>
+  </button>
+  
+  <script src="/views/prism.js"></script>
+  <script src="/static/mobile.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Toggle folder visibility
+      const folderHeaders = document.querySelectorAll('.folder-header');
+      folderHeaders.forEach(header => {
+        header.addEventListener('click', () => {
+          const parent = header.parentElement;
+          parent.classList.toggle('open');
+        });
+      });
+      
+      // Mobile sidebar toggle
+      const sidebarToggle = document.getElementById('sidebar-toggle');
+      const sidebar = document.getElementById('sidebar');
+      const sidebarOverlay = document.getElementById('sidebar-overlay');
+      
+      if (sidebarToggle && sidebar && sidebarOverlay) {
+        sidebarToggle.addEventListener('click', () => {
+          sidebar.classList.toggle('active');
+          sidebarOverlay.style.display = sidebar.classList.contains('active') ? 'block' : 'none';
+        });
+        
+        sidebarOverlay.addEventListener('click', () => {
+          sidebar.classList.remove('active');
+          sidebarOverlay.style.display = 'none';
+        });
+      }
+    });
+  </script>
+</body>
+
+</html>
