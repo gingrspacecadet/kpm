@@ -29,5 +29,5 @@ https://raw.githubusercontent.com/gingrspacecadet/kpm/main/packages.list https:/
 ```
 The left value is the package list of the remote repository. It should contain all the packages available at the right value, substituting '{pkg}' for the package name. 
 
-### TMP_LIST_FILE
+### <div>TMP_LIST_FILE</div>
 This is a temporary, intermediary file that just stores the package list of the current repository kpm is looking through.
