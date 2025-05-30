@@ -2,17 +2,11 @@
   "version": 2,
   "builds": [
     {
-      "src": "scripts/verify-structure.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["pages/**/*", "views/**/*", "static/**/*"]
-      }
-    },
-    {
       "src": "index.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["pages/**/*", "views/**/*", "static/**/*"]
+        "includeFiles": ["pages/**/*", "views/**/*", "static/**/*", "scripts/**/*"],
+        "maxLambdaSize": "15mb"
       }
     },
     {
