@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "build": "node scripts/verify-structure.js && echo 'Setup complete for Vercel serverless deployment'",
+    "build": "node scripts/verify-structure.js && mkdir -p .vercel/output/static && cp -r static/* .vercel/output/static/ 2>/dev/null || true",
     "vercel-build": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

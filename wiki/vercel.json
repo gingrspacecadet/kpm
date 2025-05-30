@@ -2,18 +2,11 @@
   "version": 2,
   "builds": [
     {
-      "src": "package.json",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["pages/**/*", "views/**/*", "static/**/*", "scripts/**/*"],
-        "zeroConfig": true
-      }
-    },
-    {
       "src": "index.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["pages/**/*", "views/**/*", "static/**/*"]
+        "includeFiles": ["pages/**/*", "views/**/*", "static/**/*", "scripts/**/*"],
+        "maxLambdaSize": "15mb"
       }
     },
     {
