@@ -6,10 +6,11 @@ curl -L https://github.com/crazy-electron/GnomeGames4Kindle/releases/latest/down
 
 echo "Extracting package..."
 unzip -q "$TEMP_DIR/gnomegames.zip" -d "$TEMP_DIR"
-cp -r "$TEMP_DIR/gnomegames"/* /mnt/us/extensions"
+mkdir -p /mnt/us/extensions/gnomegames
+cp -r "$TEMP_DIR/gnomegames"/* /mnt/us/extensions/gnomegames
 
 echo "Installing to device..."
-cp "/mnt/us/extensions/shortcut_gnomechess.sh" "/mnt/us/documents"
+cp "/mnt/us/extensions/gnomegames/shortcut_gnomechess.sh" "/mnt/us/documents"
 
 rm -rf "$TEMP_DIR"
 
