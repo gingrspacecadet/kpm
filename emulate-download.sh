@@ -29,11 +29,29 @@ echo "nameserver 1.1.1.1" > "$ROOTFS_DIR/etc/resolv.conf"
 # 6) Create launcher script
 cat > enter-kindle.sh << 'EOF'
 #!/usr/bin/env bash
-# Drop into ARMv7 Alpine shell using host qemu-arm
-echo "Entering ARMv7 Alpine shell (Kindle‐like)..."
-exec qemu-arm -L alpine-rootfs /bin/sh
+ROOTFS="alpine-rootfs"
+
+if [[ "$1" == "-c" && -n "$2" ]]; then
+    CMD="$2"
+    echo "Running command in ARMv7 Alpine environment: $CMD"
+    exec proot                                                  \
+         -r "$ROOTFS"                                           \
+         -q /usr/bin/qemu-arm                                   \
+         -b /dev -b /proc -b /sys                               \
+         env PATH=/sbin:/usr/sbin:/usr/bin:/bin:/usr/local/bin /bin/sh -c "$CMD"
+else
+    echo "Entering ARMv7 Alpine shell…"
+    exec proot                                                  \
+         -r "$ROOTFS"                                           \
+         -q /usr/bin/qemu-arm                                   \
+         -b /dev -b /proc -b /sys                               \
+         env PATH=/mnt/us/kpm/packages/bin:/sbin:/usr/sbin:/usr/bin:/bin:/usr/local/bin /bin/sh
+fi
 EOF
 chmod +x enter-kindle.sh
+
+./enter-kindle -c apk upgrade
+./enter-kindle -c apk add build-base
 
 echo
 echo "✅ Setup complete!"

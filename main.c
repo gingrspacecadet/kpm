@@ -87,6 +87,29 @@ int find_in_list(const char *listpath, const char *pkg) {
     return 0;
 }
 
+// Helper to strip directory and suffix, turning "/foo/bar/pkg.tar.gz" into "pkg"
+static void get_pkg_name(const char *path, char *out_pkg, size_t sz) {
+    const char *base = strrchr(path, '/');
+    base = base ? base + 1 : path;
+    // copy into a temp buffer so we can mutate it
+    char tmp[MAX_LINE];
+    strncpy(tmp, base, MAX_LINE-1);
+    tmp[MAX_LINE-1] = '\0';
+    // strip known suffixes
+    const char *sufs[] = {".tar.gz", ".tar.xz",  ".zip", NULL};
+    for (int i = 0; sufs[i]; i++) {
+        size_t len = strlen(sufs[i]);
+        size_t tlen = strlen(tmp);
+        if (tlen > len && strcmp(tmp + tlen - len, sufs[i]) == 0) {
+            tmp[tlen - len] = '\0';
+            break;
+        }
+    }
+    // copy to out_pkg
+    strncpy(out_pkg, tmp, sz-1);
+    out_pkg[sz-1] = '\0';
+}
+
 // Helper: create one directory, ignore EEXIST
 static int ensure_dir(const char *path, mode_t mode) {
     if (mkdir(path, mode) == 0 || errno == EEXIST) {
@@ -296,6 +319,87 @@ int install_package(const char *pkg) {
     return 1;
 }
 
+// Install directly from a local file path.
+// Returns 1 on success, 0 on failure.
+int install_from_file(const char *pkg_path) {
+    char pkg[MAX_LINE];
+    get_pkg_name(pkg_path, pkg, sizeof(pkg));
+
+    // 1) Check if already installed
+    if (find_in_list(INSTALLED_LIST, pkg)) {
+        printf("Package '%s' already installed.\n", pkg);
+        return 1;
+    }
+
+    // 2) Prepare install paths
+    char outpath[MAX_LINE], pkgdir[MAX_LINE];
+    // For archives, we keep the suffix in the outpath to aid extraction
+    snprintf(outpath, sizeof(outpath), "%s/%s", INSTALL_DIR, pkg);
+    snprintf(pkgdir, sizeof(pkgdir),  "%s/%s", INSTALL_DIR, pkg);
+
+    // 3) Ensure directories
+    if (ensure_dir(INSTALL_DIR, 0755)) return 0;
+    // For a binary (no extension), no pkgdir yet; for archives we'll extract there
+    // But create pkgdir anyway, extraction will use it
+    if (ensure_dir(pkgdir, 0755)) return 0;
+
+    // 4) Copy the file into place
+    {
+        char *const cp_argv[] = { "cp", pkg_path, outpath, NULL };
+        printf("Copying %s -> %s\n", pkg_path, outpath);
+        if (run_cmd(cp_argv) != 0) {
+            fprintf(stderr, "Failed to copy package file\n");
+            return 0;
+        }
+    }
+
+    // 5) If it’s an archive, extract it
+    if (strstr(pkg_path, ".zip")) {
+        char *const args[] = { "unzip", "-o", outpath, "-d", pkgdir, NULL };
+        printf("Extracting ZIP...\n");
+        if (run_cmd(args) < 0) return 0;
+    } else if (strstr(pkg_path, ".tar.gz")) {
+        char *const args[] = { "tar", "-xzf", outpath, "-C", pkgdir, NULL };
+        printf("Extracting tar.gz...\n");
+        if (run_cmd(args) < 0) return 0;
+    } else if (strstr(pkg_path, ".tar.xz")) {
+        char *const args[] = { "tar", "-xJf", outpath, "-C", pkgdir, NULL };
+        printf("Extracting tar.xz...\n");
+        if (run_cmd(args) < 0) return 0;
+    } else {
+        // not an archive: assume it’s a standalone binary, no extraction
+    }
+
+    // 6) If there’s an install.sh, run it
+    {
+        char script[MAX_LINE];
+        snprintf(script, sizeof(script), "%s/install.sh", pkgdir);
+        if (access(script, F_OK) == 0) {
+            if (chmod(script, 0755) != 0) {
+                perror("chmod install.sh");
+                return 0;
+            }
+            printf("Running install script: %s\n", script);
+            char *const runargs[] = { script, NULL };
+            if (run_cmd(runargs) < 0) {
+                fprintf(stderr, "install.sh failed\n");
+                return 0;
+            }
+        }
+    }
+
+    // 7) Record in INSTALLED_LIST (skip kpm)
+    if (strcmp(pkg, "kpm") != 0) {
+        FILE *f = fopen(INSTALLED_LIST, "a");
+        if (f) {
+            fprintf(f, "%s\n", pkg);
+            fclose(f);
+        }
+    }
+
+    printf("Successfully installed '%s' from local file\n", pkg);
+    return 1;
+}
 
 int uninstall_package(const char *pkg) {
     char pkgdir[MAX_LINE];
@@ -442,34 +546,35 @@ int query_package_remote(const char *pkg) {
 }
 
 void help(char op) {
-    switch (op) {
-        case 'Q':
-            fprintf(stderr,
-                "Usage:\n"
-                "  -l     # list local packages\n"
-                "  -r     # list remote packages\n" );
-            break;
-        case 'S':
-            fprintf(stderr,
-                "Usage:\n" );
-            break;
-        case 'R':
-            fprintf(stderr,
-                "Usage:\n" );
-            break;
-        default:
-            fprintf(stderr,
-                "Usage:\n"
-                "  kpm -S <package>     # install\n"
-                "  kpm -R <package>     # remove\n"
-                "  kpm -Q <package>     # query\n" );
-            break;
+    if (op == 'Q') {
+        fprintf(stderr,
+            "Usage:\n"
+            "  -Ql [<pkg>]   list local packages (or check one)\n"
+            "  -Qr [<pkg>]   list remote packages (or check one)\n");
+    } else {
+        fprintf(stderr,
+            "Usage:\n"
+            "  kpm [OPTIONS]\n\n"
+            "Short options:\n"
+            "  -S <pkg>      install package\n"
+            "  -R <pkg>      remove package\n"
+            "  -Ql <pkg>     list local packages (or check one)\n"
+            "  -Qr <pkg>     list remote packages (or check one)\n"
+            "  -U <pkg>      install a package from local zip\n\n"
+            "Long options:\n"
+            "  --help        show this help and exit\n"
+            "  --version     show version and exit\n");
     }
+    
+    // … other cases for -S and -R if you like …
     exit(1);
 }
 
 int do_install(const char *pkg) {
     return install_package(pkg) ? 0 : 1;
+}
+int do_install_local(const char *pkg) {
+    return install_from_file(pkg) ? 0 : 1;
 }
 int do_remove(const char *pkg) {
     return uninstall_package(pkg) ? 0 : 1;
@@ -487,27 +592,44 @@ int do_query(char subop, const char *pkg) {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc<2 || argv[1][0]!='-' || argv[1][1]=='\0')
-        help((char)"\0");
-
     load_config(CONFIG_DIR);
+
+    // 1) Long‐option support
+    if (argc == 2) {
+        if (strcmp(argv[1], "--version") == 0) {
+            printf("kpm version 1.0.0\n");
+            return 0;
+        }
+        if (strcmp(argv[1], "--help") == 0) {
+            help('\0');
+            return 0;
+        }
+    }
+
+    // 2) Fall back to your existing short-option parsing
+    if (argc < 2 || argv[1][0] != '-' || argv[1][1] == '\0') {
+        help('\0');
+    }
 
     char op    = argv[1][1];
     char subop = argv[1][2];  // '\0' if none
     const char *pkg = argv[2];
 
     switch (op) {
-      case 'S':
-        if (subop || argc!=3) help(op);
-        return do_install(pkg);
-      case 'R':
-        if (subop || argc<3) help(op);
-        return do_remove(pkg);
-      case 'Q':
-        if (!subop) help(op);
-        return do_query(subop, pkg);
-      default:
-        help(op);
+        case 'S':
+            if (subop || argc!=3) help(op);
+            return do_install(pkg);
+        case 'R':
+            if (subop || argc<3) help(op);
+            return do_remove(pkg);
+        case 'Q':
+            if (!subop) help(op);
+            return do_query(subop, pkg);
+        case 'U':
+            if (subop || argc!=3) help(op);
+            return do_install_local(pkg);
+        default:
+            help(op);
     }
     return 1;  // never reached
 }
