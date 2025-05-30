@@ -15,7 +15,7 @@ const express = require('express'),
 app.set('view engine', 'ejs')
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-app.use('/static', express.static('static'))
+app.use('/static', express.static(path.join(__dirname, 'static')))
 
 // Handle favicon request
 app.get('/favicon.ico', (req, res) => {
@@ -89,11 +89,18 @@ function buildNavigation(files) {
 // Error handling
 function error(res, status = 404) {
   try {
-    let md = fs.readFileSync(`./views/error.md`).toString()
-    let files = []
-    
+    let md = ''
     try {
-      files = getAllFiles('./pages')
+      md = fs.readFileSync(path.join(__dirname, 'views', 'error.md')).toString()
+    } catch (readErr) {
+      console.error('Could not read error markdown:', readErr)
+      // Use a simple default error message if file can't be read
+      md = `# Error ${status}\n\nSorry, something went wrong. Please try again later.`
+    }
+    
+    let files = []
+    try {
+      files = getAllFiles(path.join(__dirname, 'pages'))
     } catch (e) {
       console.error('Error getting files for error page:', e)
     }
@@ -138,11 +145,11 @@ app.get('/search', (req, res) => {
   const results = []
   
   if (query) {
-    const allFiles = getAllFiles('./pages')
+    const allFiles = getAllFiles(path.join(__dirname, 'pages'))
     
     allFiles.forEach(file => {
       try {
-        const fullPath = path.join('./pages', file.path)
+        const fullPath = path.join(__dirname, 'pages', file.path)
         const content = fs.readFileSync(fullPath, 'utf8')
         
         if (content.toLowerCase().includes(query) || file.name.toLowerCase().includes(query)) {
@@ -175,8 +182,8 @@ app.get('/search', (req, res) => {
   res.render('search', {
     results,
     query,
-    files: getAllFiles('./pages'),
-    navigation: buildNavigation(getAllFiles('./pages'))
+    files: getAllFiles(path.join(__dirname, 'pages')),
+    navigation: buildNavigation(getAllFiles(path.join(__dirname, 'pages')))
   })
 })
 
@@ -198,9 +205,9 @@ app.get('/:path(*)', (req, res, next) => {
     // Construct full path to the requested markdown file
     let fullPath
     if (dirPath) {
-      fullPath = path.join('./pages', dirPath, `${fileName}.md`)
+      fullPath = path.join(__dirname, 'pages', dirPath, `${fileName}.md`)
     } else {
-      fullPath = path.join('./pages', `${fileName}.md`)
+      fullPath = path.join(__dirname, 'pages', `${fileName}.md`)
     }
     
     // Read and convert the markdown file
@@ -208,7 +215,7 @@ app.get('/:path(*)', (req, res, next) => {
     md = converter.makeHtml(md)
     
     // Get all files for navigation
-    const allFiles = getAllFiles('./pages')
+    const allFiles = getAllFiles(path.join(__dirname, 'pages'))
     const navigation = buildNavigation(allFiles)
     
     // Extract title from the first h1/h2/h3 in the markdown
@@ -228,7 +235,7 @@ app.get('/:path(*)', (req, res, next) => {
     })
   } catch (err) {
     // Check if this might be a directory request
-    const dirPath = path.join('./pages', req.params.path)
+    const dirPath = path.join(__dirname, 'pages', req.params.path)
     if (fs.existsSync(dirPath) && fs.statSync(dirPath).isDirectory()) {
       // Try to find an index.md file in the directory
       const indexPath = path.join(dirPath, 'index.md')
@@ -237,7 +244,7 @@ app.get('/:path(*)', (req, res, next) => {
       }
       
       // If no index.md, list the directory contents
-      const allFiles = getAllFiles('./pages')
+      const allFiles = getAllFiles(path.join(__dirname, 'pages'))
       const navigation = buildNavigation(allFiles)
       
       // Filter files to only show those in the current directory
