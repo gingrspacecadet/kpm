@@ -38,7 +38,7 @@ KPM (Kindle Package Manager) is a lightweight tool that makes it easy to install
 ## Quick Installation
 
 ```bash
-wget https://raw.githubusercontent.com/gingrspacecadet/kpm/main/install-kpm.sh
+curl https://raw.githubusercontent.com/gingrspacecadet/kpm/main/install-kpm.sh > install-kpm.sh
 chmod +x install-kpm.sh
 ./install-kpm.sh
 ```

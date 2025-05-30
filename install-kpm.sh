@@ -18,13 +18,13 @@ chmod +x /usr/local/bin/kpm
 
 # Installed packages list
 mkdir -p /mnt/us/kpm
-touch /mnt/us/kpm/package_list.conf
+touch /mnt/us/kpm/packages.list
 
 # Config files
 echo "Creating config files..."
 mkdir -p /etc/kpm
 cat > /etc/kpm/kpm_mirrors.conf << 'EOF'
-https://raw.githubusercontent.com/gingrspacecadet/kpm/main/packages.conf https://github.com/gingrspacecadet/kpm/releases/download/{pkg}/{pkg}.zip
+https://raw.githubusercontent.com/gingrspacecadet/kpm/main/packages.list https://github.com/gingrspacecadet/kpm/releases/download/{pkg}/{pkg}.zip
 EOF
 
 cat > /etc/kpm/kpm.conf << 'EOF'
@@ -34,7 +34,7 @@ INSTALL_DIR=/mnt/us/kpm/packages
 # Mirror config file
 MIRRORS_CONF=/etc/kpm/kpm_mirrors.conf
 # Package cache directory
-TMP_LIST_FILE=/tmp/kpm/kpm_packages.conf
+TMP_LIST_FILE=/tmp/kpm/kpm_packages.list
 EOF
 
 # Download directories

@@ -24,16 +24,25 @@ To set up a development environment for KPM:
    ```
 
 2. KPM is written in C and uses standard libraries. You'll need:
-   - GCC or Clang compiler
+   - GCC
    - Make
+   - An ARMv7 environment (more on that later)
    - Basic development tools
 
 3. Build KPM:
    ```bash
-   make
+   make local
    ```
 
 This will build the `kpm` binary that you can test locally.
+If you plan on creating binaries for kpm, run this script:
+```bash
+./emulate-download.sh
+```
+It will install a virtual environment similar to the kindle for you to compile binaries in. Enter it with 
+```bash
+./enter-kindle.sh
+```
 
 ### Pull Request Workflow
 
@@ -75,13 +84,13 @@ To add a new package to KPM:
 
 - Use 4 spaces for indentation
 - Follow the existing code style
-- Add comments for complex logic
+- Try not to need comments by writing clear code
 - Write tests for new features
 - Update documentation for user-facing changes
 
 ### Documentation Contributions
 
-The KPM documentation is written in Markdown and stored in the `docs` directory. To contribute:
+The KPM documentation is written in Markdown and stored in the `wiki/pages` directory. To contribute:
 
 1. Edit the appropriate Markdown files
 2. Preview your changes locally using a Markdown previewer

@@ -12,14 +12,14 @@ Need help with KPM? You've come to the right place. This page provides resources
 
 #### Package Management Issues
 
-- **Unable to find packages**: Run `kpm update` to refresh your package lists
+- **Unable to find packages**: Check `/etc/kpm/kpm_mirrors.conf` for errors.
 - **Package installation fails**: Check for error messages that might indicate the cause, such as dependency issues or network problems
 - **Package works incorrectly**: Contact the package maintainer or check the package's documentation
 
 #### Configuration Issues
 
 - **Repository connection errors**: Verify that the repository URL is correct and accessible
-- **Custom repository not recognized**: Check your repository configuration in `/etc/sources.list`
+- **Custom repository not recognized**: Check your repository configuration in `/etc/kpm/kpm_mirrors.conf`
 
 ### Contact Support
 

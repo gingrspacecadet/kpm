@@ -10,7 +10,7 @@
 
 #define MAX_LINE       512
 #define CONFIG_DIR     "/etc/kpm/kpm.conf"
-#define INSTALLED_LIST "/mnt/us/kpm/package_list.conf"
+#define INSTALLED_LIST "/mnt/us/kpm/packages.list"
 
 // These will be filled in by load_config()
 char INSTALL_DIR[MAX_LINE];
@@ -370,7 +370,7 @@ int query_package_local(const char *pkg) {
         if (!f) {
             fprintf(stderr, "Failed to open installed list '%s': %s\n",
                     INSTALLED_LIST, strerror(errno));
-            return;  // or return an error code, depending on your function signature
+            return 1;  // or return an error code, depending on your function signature
         }
 
         printf("Installed packages:\n");

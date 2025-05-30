@@ -91,12 +91,12 @@ To remove a package:
 kpm -R packagename
 ```
 
-To check if a package is available in the repositories:
+To check if a package is available in configured repositories:
 ```bash
 kpm -Qr packagename
 ```
 
-To list all available packages in the repositories:
+To list all available packages in configured repositories:
 ```bash
 kpm -Qr
 ```

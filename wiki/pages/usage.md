@@ -94,7 +94,5 @@ kpm -Q
 | `kpm -Ql package` | Check if a package is installed |
 | `kpm -Qr` | List all available packages |
 | `kpm -Qr package` | Check if a package is available |
-| `kpm remove [package]` | Remove packages |
-| `kpm help` | Show help information |
 
 For more advanced usage, check out our [Advanced Features](/advanced) guide.

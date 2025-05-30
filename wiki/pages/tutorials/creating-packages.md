@@ -125,19 +125,19 @@ To test your package:
 1. Build it as described above
 2. Install it on your device:
    ```bash
-   kpm install ./my-package_1.0.0.kpkg
+   kpm -U ./my-package_1.0.0.zip
    ```
 3. Test all the functionality
 4. Uninstall it to make sure removal works correctly:
    ```bash
-   kpm remove my-package
+   kpm -R my-package
    ```
 
 ### Publishing Your Package
 
 To share your package with others:
 
-1. Host your `.kpkg` file on a web server or GitHub
+1. Host your `.zip` file on a web server or GitHub as well as a package list
 2. Create a repository index file listing your packages
 3. Share the repository URL so others can add it to their KPM configuration:
    ```bash

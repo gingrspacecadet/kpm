@@ -4,7 +4,11 @@ BIN_NAME := kpm
 SRC_PATH := /main.c
 BUILD_CMD := gcc -static -o /root/$(BIN_NAME) $(SRC_PATH)
 
-.PHONY: all clean move
+.PHONY: all clean move local
+
+local:
+	rm -f a.out
+	gcc main.c
 
 all: $(OUT_DIR)/$(BIN_NAME)
 

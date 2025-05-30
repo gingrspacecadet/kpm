@@ -8,7 +8,7 @@ Before installing KPM, make sure you have the following:
 
 - **Jailbroken Kindle**: KPM requires a jailbroken Kindle device
 - **KTerm**: Terminal emulator for Kindle
-- **wget**: For downloading files (usually comes pre-installed with KTerm)
+- **curl**: For downloading files (usually comes pre-installed with KTerm)
 - **unzip** and/or **tar**: For extracting packages
 
 ### Installation Steps
@@ -17,7 +17,7 @@ Before installing KPM, make sure you have the following:
 2. Run the following commands:
 
 ```bash
-wget https://raw.githubusercontent.com/gingrspacecadet/kpm/main/install-kpm.sh
+curl https://raw.githubusercontent.com/gingrspacecadet/kpm/main/install-kpm.sh > install-kpm.sh
 chmod +x install-kpm.sh
 ./install-kpm.sh
 ```
@@ -51,7 +51,7 @@ After installation, KPM will create the following directory structure:
 ├── kpm.conf                     # Main configuration
 └── kpm_mirrors.conf             # Mirror URLs
 /mnt/us/kpm/                     # KPM data directory
-├── package_list.conf            # List of installed packages
+├── packages.list                # List of installed packages
 └── packages/                    # Packages directory
     └── bin/                     # Binaries from packages
 ```
@@ -61,7 +61,7 @@ After installation, KPM will create the following directory structure:
 If you encounter any issues during installation:
 
 - Make sure your Kindle is connected to the internet
-- Verify that `wget` and `curl` are properly installed (should come with KTerm)
+- Verify that `curl` is properly installed (should come with KTerm)
 - Check if you have sufficient storage space (at least 5MB free)
 - Make sure you're running the installation script as root
 - Ensure the root filesystem is mounted as read-write (`mntroot rw`)
