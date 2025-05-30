@@ -5,14 +5,14 @@
       "src": "scripts/verify-structure.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["pages/**", "views/**", "static/**"]
+        "includeFiles": ["pages/**/*", "views/**/*", "static/**/*"]
       }
     },
     {
       "src": "index.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["pages/**", "views/**", "static/**"]
+        "includeFiles": ["pages/**/*", "views/**/*", "static/**/*"]
       }
     },
     {

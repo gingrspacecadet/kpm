@@ -6,16 +6,26 @@
 const fs = require('fs');
 const path = require('path');
 
+console.log('Starting structure verification...');
+console.log(`Current directory: ${__dirname}`);
+console.log(`Parent directory: ${path.dirname(__dirname)}`);
+
+// Use absolute paths based on the script's directory
+const baseDir = path.dirname(__dirname); // wiki directory
+
 // Check and create directories if they don't exist
 const requiredDirs = [
-  'pages',
-  'pages/packages',
-  'pages/tutorials',
-  'views',
-  'static',
+  path.join(baseDir, 'pages'),
+  path.join(baseDir, 'pages/packages'),
+  path.join(baseDir, 'pages/tutorials'),
+  path.join(baseDir, 'views'),
+  path.join(baseDir, 'static'),
 ];
 
+console.log('Checking required directories:', requiredDirs);
+
 requiredDirs.forEach(dir => {
+  console.log(`Checking directory: ${dir}`);
   if (!fs.existsSync(dir)) {
     console.log(`Creating directory: ${dir}`);
     fs.mkdirSync(dir, { recursive: true });

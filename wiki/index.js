@@ -24,35 +24,45 @@ app.get('/favicon.ico', (req, res) => {
 
 // Function to recursively get all files within directories
 function getAllFiles(dirPath, arrayOfFiles = [], relativePath = '') {
-  // Check if directory exists
-  if (!fs.existsSync(dirPath)) {
-    console.warn(`Directory not found: ${dirPath}`);
-    return arrayOfFiles;
-  }
-
-  const files = fs.readdirSync(dirPath)
-
-  files.forEach((file) => {
-    const fullPath = path.join(dirPath, file)
-    
-    if (fs.statSync(fullPath).isDirectory()) {
-      // Recursively get files from subdirectories
-      const newRelativePath = path.join(relativePath, file)
-      getAllFiles(fullPath, arrayOfFiles, newRelativePath)
-    } else {
-      // Only include markdown files
-      if (path.extname(file).toLowerCase() === '.md') {
-        const filePath = path.join(relativePath, file)
-        const displayName = path.basename(file, '.md')
-        arrayOfFiles.push({
-          name: displayName,
-          url: `/${relativePath ? relativePath + '/' : ''}${displayName}`,
-          path: filePath,
-          folder: relativePath
-        })
-      }
+  try {
+    // Check if directory exists
+    if (!fs.existsSync(dirPath)) {
+      console.warn(`Directory not found: ${dirPath}`);
+      return arrayOfFiles;
     }
-  })
+
+    const files = fs.readdirSync(dirPath)
+
+    files.forEach((file) => {
+      const fullPath = path.join(dirPath, file)
+      
+      try {
+        const stats = fs.statSync(fullPath)
+        
+        if (stats.isDirectory()) {
+          // Recursively get files from subdirectories
+          const newRelativePath = path.join(relativePath, file)
+          getAllFiles(fullPath, arrayOfFiles, newRelativePath)
+        } else {
+          // Only include markdown files
+          if (path.extname(file).toLowerCase() === '.md') {
+            const filePath = path.join(relativePath, file)
+            const displayName = path.basename(file, '.md')
+            arrayOfFiles.push({
+              name: displayName,
+              url: `/${relativePath ? relativePath + '/' : ''}${displayName}`,
+              path: filePath,
+              folder: relativePath
+            })
+          }
+        }
+      } catch (statErr) {
+        console.error(`Error reading file stats for ${fullPath}:`, statErr)
+      }
+    })
+  } catch (dirErr) {
+    console.error(`Error reading directory ${dirPath}:`, dirErr)
+  }
 
   return arrayOfFiles
 }
@@ -89,31 +99,60 @@ function buildNavigation(files) {
 // Error handling
 function error(res, status = 404) {
   try {
+    console.log(`[ERROR] Handling error with status ${status}`)
+    console.log(`[DEBUG] Current directory: ${__dirname}`)
+    
     let md = ''
     try {
-      md = fs.readFileSync(path.join(__dirname, 'views', 'error.md')).toString()
+      const errorFilePath = path.join(__dirname, 'views', 'error.md');
+      console.log(`[DEBUG] Attempting to read error file from: ${errorFilePath}`);
+      
+      if (fs.existsSync(errorFilePath)) {
+        md = fs.readFileSync(errorFilePath).toString();
+        console.log('[DEBUG] Successfully read error.md');
+      } else {
+        console.warn(`[WARN] error.md not found at ${errorFilePath}`);
+        md = `# Error ${status}\n\nSorry, something went wrong. Please try again later.`;
+      }
     } catch (readErr) {
-      console.error('Could not read error markdown:', readErr)
+      console.error('[ERROR] Could not read error markdown:', readErr);
       // Use a simple default error message if file can't be read
-      md = `# Error ${status}\n\nSorry, something went wrong. Please try again later.`
+      md = `# Error ${status}\n\nSorry, something went wrong. Please try again later.`;
     }
     
-    let files = []
+    let files = [];
+    let navigation = { _files: [] };
     try {
-      files = getAllFiles(path.join(__dirname, 'pages'))
+      const pagesPath = path.join(__dirname, 'pages');
+      console.log(`[DEBUG] Getting files from: ${pagesPath}`);
+      
+      if (fs.existsSync(pagesPath)) {
+        files = getAllFiles(pagesPath);
+        navigation = buildNavigation(files);
+        console.log(`[DEBUG] Found ${files.length} files for navigation`);
+      } else {
+        console.warn(`[WARN] Pages directory not found at ${pagesPath}`);
+      }
     } catch (e) {
-      console.error('Error getting files for error page:', e)
+      console.error('[ERROR] Error getting files for error page:', e);
     }
     
-    res.status(status).render('page', {
-      md: converter.makeHtml(md),
-      dir: status === 404 ? '404' : 'Error',
-      title: status === 404 ? '404' : 'Error',
-      files: files,
-      navigation: buildNavigation(files),
-      path: status === 404 ? '404' : 'error'
-    })
+    try {
+      console.log('[DEBUG] Rendering error page');
+      res.status(status).render('page', {
+        md: converter.makeHtml(md),
+        dir: status === 404 ? '404' : 'Error',
+        title: status === 404 ? '404' : 'Error',
+        files: files,
+        navigation: navigation,
+        path: status === 404 ? '404' : 'error'
+      });
+    } catch (renderErr) {
+      console.error('[ERROR] Error rendering error page:', renderErr);
+      throw renderErr; // Propagate to fallback handler
+    }
   } catch (err) {
+    console.error('[ERROR] Fatal error in error handling:', err);
     // Fallback error handling if rendering fails
     res.status(status).send(`
       <html>
@@ -128,11 +167,49 @@ function error(res, status = 404) {
           <h1>Error ${status}</h1>
           <p>Sorry, something went wrong. Please try again later.</p>
           <p><a href="/">Go to homepage</a></p>
+          <pre style="background: #f1f1f1; padding: 1rem; margin-top: 2rem; font-size: 0.8rem;">${err ? err.toString() : 'Unknown error'}</pre>
         </body>
       </html>
     `)
   }
 }
+
+// Health check route for diagnosing issues in production
+app.get('/_health', (req, res) => {
+  const healthInfo = {
+    status: 'ok',
+    environment: process.env.NODE_ENV || 'development',
+    directories: {
+      base: __dirname,
+      pages: path.join(__dirname, 'pages'),
+      views: path.join(__dirname, 'views'),
+      static: path.join(__dirname, 'static')
+    },
+    directoryExists: {
+      pages: fs.existsSync(path.join(__dirname, 'pages')),
+      views: fs.existsSync(path.join(__dirname, 'views')),
+      static: fs.existsSync(path.join(__dirname, 'static'))
+    },
+    files: {}
+  }
+
+  // Check for critical files
+  const criticalFiles = [
+    'views/page.ejs',
+    'views/error.md',
+    'pages/home.md'
+  ]
+  
+  criticalFiles.forEach(file => {
+    const fullPath = path.join(__dirname, file);
+    healthInfo.files[file] = {
+      exists: fs.existsSync(fullPath),
+      path: fullPath
+    }
+  })
+  
+  res.json(healthInfo)
+})
 
 // Homepage
 app.get('/', (req, res) => {
@@ -197,10 +274,15 @@ app.get('/:path(*)', (req, res, next) => {
   }
   
   try {
+    // Debug
+    console.log(`[DEBUG] Requested path: ${requestPath}`);
+
     // Determine if this is a file in a subdirectory
     const pathParts = requestPath.split('/')
     const fileName = pathParts.pop() // Last part is the file name
     const dirPath = pathParts.length > 0 ? pathParts.join('/') : ''
+    
+    console.log(`[DEBUG] File name: ${fileName}, Dir path: ${dirPath}`);
     
     // Construct full path to the requested markdown file
     let fullPath
@@ -209,6 +291,9 @@ app.get('/:path(*)', (req, res, next) => {
     } else {
       fullPath = path.join(__dirname, 'pages', `${fileName}.md`)
     }
+    
+    console.log(`[DEBUG] Full path: ${fullPath}`);
+    console.log(`[DEBUG] File exists: ${fs.existsSync(fullPath)}`);
     
     // Read and convert the markdown file
     let md = fs.readFileSync(fullPath).toString()
