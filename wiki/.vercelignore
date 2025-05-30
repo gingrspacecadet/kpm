@@ -1,0 +1,9 @@
+# Make sure these important directories are included
+!pages/
+!views/
+!static/
+
+# Ignore development files
+.git
+.github
+node_modules

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title><%= title %> | KPMWiki</title>
+  <meta charset='utf-8'>
+  <meta property='og:title' content='<%= title %> | KPMWiki'>
+  <meta name='description' content='<%= title %> on KPMWiki'>
+  <meta property='og:description' content='<%= title %> on KPMWiki'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="/static/base.css">
+  <link rel="stylesheet" href="/static/sidebar.css">
+  <link rel="stylesheet" href="/static/prism.css">
+  <link rel="stylesheet" href="/static/mobile.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta name="theme-color" content="#343a40">
+</head>
+
+<body>
+  <div class="header">
+    <div class="header-title">
+      <a href="/">KPMWiki</a>
+    </div>
+    <div class="search-container">
+      <form action="/search" method="GET">
+        <input type="text" name="q" placeholder="Search..." class="search-input">
+        <button type="submit" class="search-button">
+          <i class="fas fa-search"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h3>Navigation</h3>
+      </div>
+      <div class="sidebar-content">
+        <ul class="nav-tree">
+          <li><a href="/" class="<%= path === 'home' ? 'active' : '' %>"><i class="fas fa-home"></i> Home</a></li>
+
+          <% function renderNavigation(nav, currentPath, indent = 0) { %>
+            <% for (const key in nav) { %>
+              <% if (key !== '_files') { %>
+                <% const isOpen = path.includes(key + '/') || path.startsWith(key); %>
+                <li class="folder <%= isOpen ? 'open' : '' %>">
+                  <div class="folder-header indent-<%= indent %>">
+                    <i class="fas fa-folder<%= isOpen ? '-open' : '' %>"></i>
+                    <span><%= key %></span>
+                  </div>
+                  <ul class="folder-content">
+                    <% if (nav[key]._files && nav[key]._files.length > 0) { %>
+                      <% nav[key]._files.forEach(file => { %>
+                        <li class="indent-<%= indent+1 %>">
+                          <a href="<%= file.url %>" class="<%= currentPath === file.url.substring(1) ? 'active' : '' %>">
+                            <i class="fas fa-file-alt"></i> <%= file.name %>
+                          </a>
+                        </li>
+                      <% }) %>
+                    <% } %>
+                    <%= renderNavigation(nav[key], currentPath, indent + 1) %>
+                  </ul>
+                </li>
+              <% } %>
+            <% } %>
+            <% return '' %>
+          <% } %>
+
+          <% if (navigation && Object.keys(navigation).length > 0) { %>
+            <%= renderNavigation(navigation, path) %>
+          <% } %>
+
+          <!-- Root level files -->
+          <% if (navigation && navigation._files && navigation._files.length > 0) { %>
+            <% navigation._files.filter(file => file.name !== 'home').forEach(file => { %>
+              <li>
+                <a href="<%= file.url %>" class="<%= path === file.url.substring(1) ? 'active' : '' %>">
+                  <i class="fas fa-file-alt"></i> <%= file.name %>
+                </a>
+              </li>
+            <% }) %>
+          <% } %>
+        </ul>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="breadcrumbs">
+        <a href="/"><i class="fas fa-home"></i></a>
+        <% 
+        if (dir !== 'home') {
+          const parts = dir.split('/');
+          let currentPath = '';
+          parts.forEach((part, index) => {
+            currentPath += (currentPath ? '/' : '') + part;
+            if (index < parts.length - 1) {
+              %> / <a href="/<%= currentPath %>"><%= part %></a> <%
+            } else {
+              %> / <%= part %><%
+            }
+          });
+        }
+        %>
+      </div>
+
+      <div class="page-title">
+        <h1><%= title %></h1>
+      </div>
+
+      <div class="article-container">
+        <div class="table-of-contents">
+          <h3>Table of Contents</h3>
+          <div id="toc"></div>
+        </div>
+
+        <div id="article" class="article-content">
+          <%- md %>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>Last updated: <%= new Date().toLocaleDateString() %></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
+    <i class="fas fa-bars"></i>
+  </button>
+  
+  <script src="/static/prism.js"></script>
+  <script src="/static/mobile.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Generate table of contents
+      const headings = document.querySelectorAll('#article h2, #article h3, #article h4');
+      const toc = document.getElementById('toc');
+      
+      if (headings.length > 0) {
+        const tocList = document.createElement('ul');
+        
+        headings.forEach((heading, index) => {
+          // Add an ID to the heading if it doesn't have one
+          if (!heading.id) {
+            heading.id = `heading-${index}`;
+          }
+          
+          const level = parseInt(heading.tagName.substring(1)) - 2;
+          const listItem = document.createElement('li');
+          listItem.className = `toc-level-${level}`;
+          listItem.style.paddingLeft = `${level * 10}px`;
+          
+          const link = document.createElement('a');
+          link.href = `#${heading.id}`;
+          link.textContent = heading.textContent;
+          
+          listItem.appendChild(link);
+          tocList.appendChild(listItem);
+        });
+        
+        toc.appendChild(tocList);
+      } else {
+        toc.innerHTML = '<p>No headings found</p>';
+      }
+      
+      // Toggle folder visibility
+      const folderHeaders = document.querySelectorAll('.folder-header');
+      folderHeaders.forEach(header => {
+        header.addEventListener('click', () => {
+          const parent = header.parentElement;
+          parent.classList.toggle('open');
+        });
+      });
+      
+      // Mobile sidebar toggle
+      const sidebarToggle = document.getElementById('sidebar-toggle');
+      const sidebar = document.getElementById('sidebar');
+      const sidebarOverlay = document.getElementById('sidebar-overlay');
+      
+      if (sidebarToggle && sidebar && sidebarOverlay) {
+        sidebarToggle.addEventListener('click', () => {
+          sidebar.classList.toggle('active');
+          sidebarOverlay.style.display = sidebar.classList.contains('active') ? 'block' : 'none';
+        });
+        
+        sidebarOverlay.addEventListener('click', () => {
+          sidebar.classList.remove('active');
+          sidebarOverlay.style.display = 'none';
+        });
+      }
+      
+      // Highlight code blocks
+      document.querySelectorAll('pre code').forEach(block => {
+        Prism.highlightElement(block);
+      });
+    });
+  </script>
+</body>
+
+</html>

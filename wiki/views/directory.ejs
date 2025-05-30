@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title><%= dirPath %> | KPMWiki</title>
+  <meta charset='utf-8'>
+  <meta property='og:title' content='<%= dirPath %> | KPMWiki'>
+  <meta name='description' content='Folder contents on KPMWiki'>
+  <meta property='og:description' content='Folder contents on KPMWiki'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="/static/base.css">
+  <link rel="stylesheet" href="/static/sidebar.css">
+  <link rel="stylesheet" href="/static/prism.css">
+  <link rel="stylesheet" href="/static/mobile.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta name="theme-color" content="#343a40">
+</head>
+
+<body>
+  <div class="header">
+    <div class="header-title">
+      <a href="/">KPMWiki</a>
+    </div>
+    <div class="search-container">
+      <form action="/search" method="GET">
+        <input type="text" name="q" placeholder="Search..." class="search-input">
+        <button type="submit" class="search-button">
+          <i class="fas fa-search"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h3>Navigation</h3>
+      </div>
+      <div class="sidebar-content">
+        <ul class="nav-tree">
+          <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+
+          <% function renderNavigation(nav, currentPath, indent = 0) { %>
+            <% for (const key in nav) { %>
+              <% if (key !== '_files') { %>
+                <% const isOpen = dirPath.includes(key + '/') || dirPath.startsWith(key); %>
+                <li class="folder <%= isOpen ? 'open' : '' %>">
+                  <div class="folder-header indent-<%= indent %>">
+                    <i class="fas fa-folder<%= isOpen ? '-open' : '' %>"></i>
+                    <span><%= key %></span>
+                  </div>
+                  <ul class="folder-content">
+                    <% if (nav[key]._files && nav[key]._files.length > 0) { %>
+                      <% nav[key]._files.forEach(file => { %>
+                        <li class="indent-<%= indent+1 %>">
+                          <a href="<%= file.url %>">
+                            <i class="fas fa-file-alt"></i> <%= file.name %>
+                          </a>
+                        </li>
+                      <% }) %>
+                    <% } %>
+                    <%= renderNavigation(nav[key], currentPath, indent + 1) %>
+                  </ul>
+                </li>
+              <% } %>
+            <% } %>
+            <% return '' %>
+          <% } %>
+
+          <% if (navigation && Object.keys(navigation).length > 0) { %>
+            <%= renderNavigation(navigation, dirPath) %>
+          <% } %>
+
+          <!-- Root level files -->
+          <% if (navigation && navigation._files && navigation._files.length > 0) { %>
+            <% navigation._files.filter(file => file.name !== 'home').forEach(file => { %>
+              <li>
+                <a href="<%= file.url %>">
+                  <i class="fas fa-file-alt"></i> <%= file.name %>
+                </a>
+              </li>
+            <% }) %>
+          <% } %>
+        </ul>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="breadcrumbs">
+        <a href="/"><i class="fas fa-home"></i></a>
+        <% 
+        if (dirPath) {
+          const parts = dirPath.split('/');
+          let currentPath = '';
+          parts.forEach((part, index) => {
+            currentPath += (currentPath ? '/' : '') + part;
+            if (index < parts.length - 1) {
+              %> / <a href="/<%= currentPath %>"><%= part %></a> <%
+            } else {
+              %> / <%= part %><%
+            }
+          });
+        }
+        %>
+      </div>
+
+      <div class="page-title">
+        <h1><i class="fas fa-folder-open"></i> <%= dirPath %></h1>
+      </div>
+
+      <div class="directory-content">
+        <% 
+        // Group files by folder
+        const folderGroups = {};
+        
+        dirFiles.forEach(file => {
+          const relativePath = file.folder.substring(dirPath.length);
+          const firstDir = relativePath.split('/').filter(Boolean)[0] || '';
+          
+          if (!folderGroups[firstDir]) {
+            folderGroups[firstDir] = [];
+          }
+          folderGroups[firstDir].push(file);
+        });
+        %>
+        
+        <% 
+        // First, display direct children
+        if (folderGroups[''] && folderGroups[''].length) { 
+        %>
+          <h2>Files</h2>
+          <div class="files-grid">
+            <% folderGroups[''].forEach(file => { %>
+              <div class="file-item">
+                <a href="<%= file.url %>">
+                  <i class="fas fa-file-alt"></i>
+                  <span><%= file.name %></span>
+                </a>
+              </div>
+            <% }); %>
+          </div>
+        <% } %>
+        
+        <% 
+        // Then, display subdirectories
+        const subdirs = Object.keys(folderGroups).filter(dir => dir !== '');
+        if (subdirs.length) { 
+        %>
+          <h2>Folders</h2>
+          <div class="folders-grid">
+            <% subdirs.forEach(dir => { %>
+              <div class="folder-item">
+                <a href="/<%= dirPath %>/<%= dir %>">
+                  <i class="fas fa-folder"></i>
+                  <span><%= dir %></span>
+                </a>
+              </div>
+            <% }); %>
+          </div>
+        <% } %>
+
+        <% if (!Object.keys(folderGroups).length) { %>
+          <div class="empty-dir">
+            <p>This folder is empty.</p>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
+    <i class="fas fa-bars"></i>
+  </button>
+  
+  <script src="/views/prism.js"></script>
+  <script src="/static/mobile.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Toggle folder visibility
+      const folderHeaders = document.querySelectorAll('.folder-header');
+      folderHeaders.forEach(header => {
+        header.addEventListener('click', () => {
+          const parent = header.parentElement;
+          parent.classList.toggle('open');
+        });
+      });
+      
+      // Mobile sidebar toggle
+      const sidebarToggle = document.getElementById('sidebar-toggle');
+      const sidebar = document.getElementById('sidebar');
+      const sidebarOverlay = document.getElementById('sidebar-overlay');
+      
+      if (sidebarToggle && sidebar && sidebarOverlay) {
+        sidebarToggle.addEventListener('click', () => {
+          sidebar.classList.toggle('active');
+          sidebarOverlay.style.display = sidebar.classList.contains('active') ? 'block' : 'none';
+        });
+        
+        sidebarOverlay.addEventListener('click', () => {
+          sidebar.classList.remove('active');
+          sidebarOverlay.style.display = 'none';
+        });
+      }
+    });
+  </script>
+</body>
+
+</html>

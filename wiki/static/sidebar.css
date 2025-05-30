@@ -1,0 +1,147 @@
+/* Sidebar styling */
+.sidebar {
+  flex: 0 0 260px;
+  background-color: #343a40;
+  color: white;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: width 0.3s ease;
+}
+
+.sidebar-header {
+  padding: 1rem;
+  border-bottom: 1px solid #495057;
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.sidebar-content {
+  padding: 0.5rem 0;
+}
+
+.nav-tree {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-tree li {
+  margin: 2px 0;
+}
+
+.nav-tree a {
+  display: flex;
+  align-items: center;
+  color: #adb5bd;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.nav-tree a:hover {
+  color: white;
+  background-color: #495057;
+}
+
+.nav-tree a.active {
+  color: white;
+  background-color: #007bff;
+}
+
+.nav-tree a i {
+  margin-right: 0.5rem;
+  width: 16px;
+  text-align: center;
+}
+
+/* Folder styling */
+.folder > .folder-header {
+  display: flex;
+  align-items: center;
+  color: #adb5bd;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s;
+}
+
+.folder > .folder-header:hover {
+  color: white;
+  background-color: #495057;
+}
+
+.folder > .folder-header i {
+  margin-right: 0.5rem;
+  color: #ffc107;
+  width: 16px;
+  text-align: center;
+}
+
+.folder > .folder-content {
+  display: none;
+  margin-left: 0.5rem;
+}
+
+.folder.open > .folder-content {
+  display: block;
+}
+
+/* Responsive sidebar */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 60px;
+    bottom: 0;
+    left: -260px;
+    z-index: 1000;
+    width: 260px;
+    transition: left 0.3s ease;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+    background-color: #343a40;
+  }
+
+  .sidebar.active {
+    left: 0;
+  }
+
+  .sidebar-toggle {
+    display: block;
+  }
+  
+  /* Enhance folder interact-ability on mobile */
+  .folder > .folder-header {
+    padding: 0.7rem 1rem;
+  }
+  
+  .nav-tree a {
+    padding: 0.7rem 1rem;
+  }
+}
+
+/* Extra adjustments for very small screens */
+@media (max-width: 480px) {
+  .sidebar {
+    width: 240px;
+    left: -240px;
+  }
+  
+  .sidebar-content {
+    font-size: 0.95rem;
+  }
+  
+  .nav-tree a {
+    padding: 0.8rem 1rem;
+  }
+  
+  /* Adjust header height and sidebar top position */
+  .sidebar {
+    top: 90px;
+  }
+}
