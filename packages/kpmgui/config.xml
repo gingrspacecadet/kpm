@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension>
+    <information>
+        <name>KPM Manager</name>
+        <version>1.0</version>
+        <author>gingrspacecadet</author>
+        <description>Graphical front-end to kpm</description>
+    </information>
+    <menus>
+        <menu type="json" dynamic="true">menu.json</menu>
+    </menus>
+</extension>

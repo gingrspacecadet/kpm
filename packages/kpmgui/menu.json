@@ -1,0 +1,5 @@
+{
+	"items": [
+		{"name": "kpm gui", "priority": 1, "action": "./bin/kpm_ui"}
+	]
+}

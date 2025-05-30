@@ -1,7 +1,7 @@
 out/
 kpm.conf
-kpm_*
 alpine*
 mnt/
 .vscode/
 a.out
+kpm-gui
