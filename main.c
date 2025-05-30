@@ -551,6 +551,11 @@ void help(char op) {
             "Usage:\n"
             "  -Ql [<pkg>]   list local packages (or check one)\n"
             "  -Qr [<pkg>]   list remote packages (or check one)\n");
+    } else if (op == 'C') {
+        fprintf(stderr,
+            "Usage:\n"
+            "  -Cc           open config file\n"
+            "  -Cm           open mirror config file\n");
     } else {
         fprintf(stderr,
             "Usage:\n"
@@ -558,9 +563,9 @@ void help(char op) {
             "Short options:\n"
             "  -S <pkg>      install package\n"
             "  -R <pkg>      remove package\n"
-            "  -Ql <pkg>     list local packages (or check one)\n"
-            "  -Qr <pkg>     list remote packages (or check one)\n"
-            "  -U <pkg>      install a package from local zip\n\n"
+            "  -Q <pkg>      query\n"
+            "  -U <pkg>      install a package from local zip\n"
+            "  -C            configuring\n\n"
             "Long options:\n"
             "  --help        show this help and exit\n"
             "  --version     show version and exit\n");
@@ -590,6 +595,43 @@ int do_query(char subop, const char *pkg) {
             return 0; 
     }
 }
+int do_config(char subop, const char *unused_pkg) {
+    const char *path;
+
+    // Choose which file to edit
+    switch (subop) {
+      case 'c':
+        path = CONFIG_DIR;
+        break;
+      case 'm':
+        path = MIRRORS_CONF;
+        break;
+      default:
+        fprintf(stderr, "Unknown config sub‐option '%c'\n", subop);
+        return 1;
+    }
+
+    // Determine editor
+    const char *editor = getenv("EDITOR");
+    if (!editor || !*editor) {
+        editor = "vi";  // fallback
+    }
+
+    // Build argv[] for execvp
+    char *const argv[] = {
+        (char *)editor,
+        (char *)path,
+        NULL
+    };
+
+    // Launch the editor
+    if (run_cmd(argv) < 0) {
+        fprintf(stderr, "Failed to launch editor '%s' on %s\n", editor, path);
+        return 1;
+    }
+
+    return 0;
+}
 
 int main(int argc, char *argv[]) {
     load_config(CONFIG_DIR);
@@ -606,7 +648,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // 2) Fall back to your existing short-option parsing
+    // 2) Fall back to existing short-option parsing
     if (argc < 2 || argv[1][0] != '-' || argv[1][1] == '\0') {
         help('\0');
     }
@@ -628,6 +670,9 @@ int main(int argc, char *argv[]) {
         case 'U':
             if (subop || argc!=3) help(op);
             return do_install_local(pkg);
+        case 'C':
+            if (!subop) help(op);
+            return do_config(subop, pkg);
         default:
             help(op);
     }
