@@ -33,17 +33,39 @@ requiredDirs.forEach(dir => {
 });
 
 // Create a basic home.md file if it doesn't exist
-const homeMdPath = path.join('pages', 'home.md');
+const homeMdPath = path.join(baseDir, 'pages', 'home.md');
 if (!fs.existsSync(homeMdPath)) {
-  console.log('Creating basic home.md');
+  console.log(`Creating basic home.md at ${homeMdPath}`);
   fs.writeFileSync(homeMdPath, `# Welcome to KPMWiki\n\nThis is the official documentation for KPM - the Kindle Package Manager.\n\n## Getting Started\n\nMore content will be generated soon.`);
 }
 
 // Create a basic error.md file if it doesn't exist
-const errorMdPath = path.join('views', 'error.md');
+const errorMdPath = path.join(baseDir, 'views', 'error.md');
 if (!fs.existsSync(errorMdPath)) {
-  console.log('Creating basic error.md');
+  console.log(`Creating basic error.md at ${errorMdPath}`);
   fs.writeFileSync(errorMdPath, `# Page Not Found\n\nSorry, the page you are looking for does not exist.\n\n[Return to Home](/)`);
+}
+
+// Create page.ejs if it doesn't exist
+const pageEjsPath = path.join(baseDir, 'views', 'page.ejs');
+if (!fs.existsSync(pageEjsPath)) {
+  console.log(`Creating basic page.ejs at ${pageEjsPath}`);
+  fs.writeFileSync(pageEjsPath, `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> | KPM Wiki</title>
+  <link rel="stylesheet" href="/static/base.css">
+</head>
+<body>
+  <div class="container">
+    <div class="content">
+      <%- md %>
+    </div>
+  </div>
+</body>
+</html>`);
 }
 
 console.log('Verification of required directories and files completed');

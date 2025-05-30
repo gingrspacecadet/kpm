@@ -2,10 +2,11 @@
   "version": 2,
   "builds": [
     {
-      "src": "scripts/verify-structure.js",
+      "src": "package.json",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["pages/**/*", "views/**/*", "static/**/*"]
+        "includeFiles": ["pages/**/*", "views/**/*", "static/**/*", "scripts/**/*"],
+        "zeroConfig": true
       }
     },
     {

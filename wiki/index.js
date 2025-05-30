@@ -99,19 +99,13 @@ function buildNavigation(files) {
 // Error handling
 function error(res, status = 404) {
   try {
-    console.log(`[ERROR] Handling error with status ${status}`)
-    console.log(`[DEBUG] Current directory: ${__dirname}`)
-    
     let md = ''
     try {
       const errorFilePath = path.join(__dirname, 'views', 'error.md');
-      console.log(`[DEBUG] Attempting to read error file from: ${errorFilePath}`);
       
       if (fs.existsSync(errorFilePath)) {
         md = fs.readFileSync(errorFilePath).toString();
-        console.log('[DEBUG] Successfully read error.md');
       } else {
-        console.warn(`[WARN] error.md not found at ${errorFilePath}`);
         md = `# Error ${status}\n\nSorry, something went wrong. Please try again later.`;
       }
     } catch (readErr) {
@@ -124,21 +118,16 @@ function error(res, status = 404) {
     let navigation = { _files: [] };
     try {
       const pagesPath = path.join(__dirname, 'pages');
-      console.log(`[DEBUG] Getting files from: ${pagesPath}`);
       
       if (fs.existsSync(pagesPath)) {
         files = getAllFiles(pagesPath);
         navigation = buildNavigation(files);
-        console.log(`[DEBUG] Found ${files.length} files for navigation`);
-      } else {
-        console.warn(`[WARN] Pages directory not found at ${pagesPath}`);
       }
     } catch (e) {
       console.error('[ERROR] Error getting files for error page:', e);
     }
     
     try {
-      console.log('[DEBUG] Rendering error page');
       res.status(status).render('page', {
         md: converter.makeHtml(md),
         dir: status === 404 ? '404' : 'Error',
@@ -274,15 +263,10 @@ app.get('/:path(*)', (req, res, next) => {
   }
   
   try {
-    // Debug
-    console.log(`[DEBUG] Requested path: ${requestPath}`);
-
     // Determine if this is a file in a subdirectory
     const pathParts = requestPath.split('/')
     const fileName = pathParts.pop() // Last part is the file name
     const dirPath = pathParts.length > 0 ? pathParts.join('/') : ''
-    
-    console.log(`[DEBUG] File name: ${fileName}, Dir path: ${dirPath}`);
     
     // Construct full path to the requested markdown file
     let fullPath
@@ -292,8 +276,10 @@ app.get('/:path(*)', (req, res, next) => {
       fullPath = path.join(__dirname, 'pages', `${fileName}.md`)
     }
     
-    console.log(`[DEBUG] Full path: ${fullPath}`);
-    console.log(`[DEBUG] File exists: ${fs.existsSync(fullPath)}`);
+    // Ensure the file exists
+    if (!fs.existsSync(fullPath)) {
+      throw new Error(`File not found: ${fullPath}`);
+    }
     
     // Read and convert the markdown file
     let md = fs.readFileSync(fullPath).toString()
