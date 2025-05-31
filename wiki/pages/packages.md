@@ -59,7 +59,7 @@ kpm -S kanki
 ```
 
 ### kindlefetch
-A system information tool similar to neofetch, showing information about your Kindle device.
+Simple CLI for downloading books from Anna's Archive directly to your Kindle
 
 **Installation:**
 ```bash
