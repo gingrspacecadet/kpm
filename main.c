@@ -11,6 +11,8 @@
 #define MAX_LINE       512
 #define CONFIG_DIR     "/etc/kpm/kpm.conf"
 #define INSTALLED_LIST "/mnt/us/kpm/packages.list"
+#define MENU_JSON_PATH "/mnt/us/extensions/kpm/menu.json"
+#define VERSION "1.1.0"
 
 // These will be filled in by load_config()
 char INSTALL_DIR[MAX_LINE];
@@ -85,6 +87,203 @@ int find_in_list(const char *listpath, const char *pkg) {
 
     fclose(f);
     return 0;
+}
+
+
+// Runs a shell command (like "kpm -Qr") and returns a NULL-terminated array of
+// strdup’d strings (one per non-empty output line).  Caller must free with free_lines().
+// This version does NOT trim leading whitespace here—trimming is done later.
+static char **collect_lines(const char *cmd) {
+    FILE *fp = popen(cmd, "r");
+    if (!fp) return NULL;
+
+    char **lines = NULL;
+    size_t count = 0;
+    char buffer[MAX_LINE];
+
+    while (fgets(buffer, sizeof(buffer), fp)) {
+        // Strip trailing CR/LF
+        buffer[strcspn(buffer, "\r\n")] = '\0';
+        // Skip empty lines
+        if (buffer[0] == '\0') continue;
+
+        // strdup the raw line; trimming is done later
+        char *dup = strdup(buffer);
+        if (!dup) break;
+        char **tmp = realloc(lines, (count + 2) * sizeof(char *));
+        if (!tmp) {
+            free(dup);
+            break;
+        }
+        lines = tmp;
+        lines[count++] = dup;
+        lines[count] = NULL;
+    }
+    pclose(fp);
+    return lines;
+}
+
+// Frees the array returned by collect_lines()
+static void free_lines(char **lines) {
+    if (!lines) return;
+    for (size_t i = 0; lines[i]; i++) {
+        free(lines[i]);
+    }
+    free(lines);
+}
+
+
+// Trim leading whitespace in-place (modifies `str`)
+static void trim_leading_whitespace(char *str) {
+    char *p = str;
+    while (*p && isspace((unsigned char)*p)) {
+        p++;
+    }
+    if (p != str) {
+        memmove(str, p, strlen(p) + 1);
+    }
+}
+
+// Checks whether 'needle' is in the NULL-terminated array 'haystack'
+static int in_list(char **haystack, const char *needle) {
+    if (!haystack || !needle) return 0;
+    for (size_t i = 0; haystack[i]; i++) {
+        if (strcmp(haystack[i], needle) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// Updates the KUAL menu.json so that:
+//   - "Install Package" lists all (remote ∖ local) packages,
+//     skipping any remote line containing "https://" and trimming leading spaces.
+//   - "Remove Package" lists all local packages (trimmed).
+//   - Adds a "Configure KPM" entry at the end.
+static void update_kual_menu(void) {
+    // 1) Collect remote and local lists
+    char **remote = collect_lines("kpm -Qr");
+    char **local  = collect_lines("kpm -Ql");
+
+    if (!remote || !local) {
+        free_lines(remote);
+        free_lines(local);
+        return;
+    }
+
+    // 2) Open menu.json for writing (overwrite)
+    FILE *jf = fopen(MENU_JSON_PATH, "w");
+    if (!jf) {
+        fprintf(stderr, "ERROR: Could not open %s for writing: %s\n",
+                MENU_JSON_PATH, strerror(errno));
+        free_lines(remote);
+        free_lines(local);
+        return;
+    }
+
+    // 3) Write the JSON header
+    fprintf(jf,
+        "{\n"
+        "	\"items\": [\n"
+        "	{\n"
+        "		\"name\": \"KPM\",\n"
+        "		\"priority\": 0,\n"
+        "		\"items\": [\n");
+
+    // --- Installable Packages Submenu ---
+    fprintf(jf,
+        "		{\n"
+        "			\"name\": \"Install Package\",\n"
+        "			\"priority\": 1,\n"
+        "			\"items\": [\n");
+
+    int first_install = 1;
+    for (size_t i = 0; remote[i]; i++) {
+        // Trim leading whitespace
+        trim_leading_whitespace(remote[i]);
+        // Skip any line containing "https://"
+        if (strstr(remote[i], "https://")) {
+            continue;
+        }
+        // If remote[i] is not already in local[], we can install it
+        if (!in_list(local, remote[i])) {
+            if (!first_install) {
+                fprintf(jf, ",\n");
+            }
+            first_install = 0;
+            fprintf(jf,
+                "			{\n"
+                "				\"name\": \"%s\",\n"
+                "				\"priority\": 2,\n"
+                "				\"action\": \"/mnt/us/extensions/kterm/bin/kterm\",\n"
+                "				\"params\": \"-e \'kpm -S %s\'\",\n"
+                "				\"exitmenu\": false,\n"
+                "				\"refresh\": true,\n"
+                "				\"status\": false,\n"
+                "				\"internal\": \"status Installing %s...\"\n"
+                "			}",
+                remote[i], remote[i], remote[i]);
+        }
+    }
+    fprintf(jf,
+        "\n"
+        "			]\n"
+        "		},\n");
+
+    // --- Removable Packages Submenu ---
+    fprintf(jf,
+        "		{\n"
+        "			\"name\": \"Remove Package\",\n"
+        "			\"priority\": 2,\n"
+        "			\"items\": [\n");
+
+    int first_remove = 1;
+    for (size_t i = 0; local[i]; i++) {
+        // Trim leading whitespace
+        trim_leading_whitespace(local[i]);
+        if (!first_remove) {
+            fprintf(jf, ",\n");
+        }
+        first_remove = 0;
+        fprintf(jf,
+            "			{\n"
+            "				\"name\": \"%s\",\n"
+            "				\"priority\": 2,\n"
+            "				\"action\": \"/mnt/us/extensions/kterm/bin/kterm\",\n"
+            "				\"params\": \"-e \'kpm -R %s\'\",\n"
+            "				\"exitmenu\": false,\n"
+            "				\"refresh\": true,\n"
+            "				\"status\": false,\n"
+            "				\"internal\": \"status Removing %s...\"\n"
+            "			}",
+            local[i], local[i], local[i]);
+    }
+    fprintf(jf,
+        "\n"
+        "			]\n"
+        "		},\n");
+
+    // --- Configure KPM action ---
+    fprintf(jf,
+        "		{\n"
+        "			\"name\": \"Configure KPM\",\n"
+        "			\"priority\": 3,\n"
+        "			\"action\": \"/mnt/us/extensions/kterm/bin/kterm\",\n"
+        "			\"params\": \"-e \'$EDITOR /etc/kpm/kpm.conf\'\", \n"
+        "			\"exitmenu\": false,\n"
+        "			\"internal\": \"status Editing kpm.conf…\"\n"
+        "		}\n");
+
+    // Close JSON arrays/objects
+    fprintf(jf,
+        "			]\n"
+        "		}\n"
+        "	]\n"
+        "}\n");
+
+    fclose(jf);
+    free_lines(remote);
+    free_lines(local);
 }
 
 // Helper to strip directory and suffix, turning "/foo/bar/pkg.tar.gz" into "pkg"
@@ -305,8 +504,9 @@ int install_package(const char *pkg) {
     if (!install_from_mirrors(pkg)) {
         return 0;
     }
-    printf("Successfully installed %s\n", pkg);
 
+    printf("Successfully installed %s\n", pkg);
+    
     // don’t record kpm itself
     if (strcmp(pkg, "kpm") != 0) {
         FILE *f = fopen(INSTALLED_LIST, "a");
@@ -315,7 +515,8 @@ int install_package(const char *pkg) {
             fclose(f);
         }
     }
-
+    
+    update_kual_menu();
     return 1;
 }
 
@@ -454,6 +655,7 @@ int uninstall_package(const char *pkg) {
         return 0;
     }
 
+    update_kual_menu();
     printf("Package '%s' removed and list updated.\n", pkg);
     return 1;
 }
@@ -639,7 +841,7 @@ int main(int argc, char *argv[]) {
     // 1) Long‐option support
     if (argc == 2) {
         if (strcmp(argv[1], "--version") == 0) {
-            printf("kpm version 1.0.0\n");
+            printf("kpm version %s\n", VERSION);
             return 0;
         }
         if (strcmp(argv[1], "--help") == 0) {

@@ -57,4 +57,6 @@ grep -qxF 'export PATH="/mnt/us/kpm/packages/bin:$PATH"' /etc/profile || \
 
 source ~/.bashrc
 
+kpm -S kpmgui
+
 echo "All done! You can now run 'kpm'."

@@ -1,5 +1,26 @@
 {
 	"items": [
-		{"name": "kpm gui", "priority": 1, "action": "./bin/kpm_ui"}
+	  {
+		"name": "KPM",
+		"priority": 0,
+		"items": [
+  
+		  {
+			"name": "Update this menu",
+			"priority": 1,
+			"action": "./bin/kpm",
+			"params": "-S kpm",
+  
+			"items": [
+			  {
+				"name": "${line}",
+				"action": "kpm -S ${line}"
+			  }
+			]
+		  }
+  
+		]
+	  }
 	]
-}
+  }
+  
