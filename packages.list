@@ -8,3 +8,6 @@ kindlefetch
 kwordle
 kpmgui
 cmsg
+gcc
+make
+musl
