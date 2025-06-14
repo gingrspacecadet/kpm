@@ -11,3 +11,4 @@ cmsg
 cc
 make
 musl
+git
