@@ -24,7 +24,7 @@ touch /mnt/us/kpm/packages.list
 echo "Creating config files..."
 mkdir -p /etc/kpm
 cat > /etc/kpm/kpm_mirrors.conf << 'EOF'
-https://raw.githubusercontent.com/gingrspacecadet/kpm/main/packages.list https://github.com/gingrspacecadet/kpm/releases/download/{pkg}/{pkg}.zip
+https://raw.githubusercontent.com/gingrspacecadet/kpm/refs/heads/main/packages.list https://github.com/gingrspacecadet/kpm/releases/download/{pkg}/{pkg}.zip
 EOF
 
 cat > /etc/kpm/kpm.conf << 'EOF'

@@ -1,2 +1,2 @@
 #!/bin/sh
-cp make /usr/bin
+mv /mnt/us/kpm/packages/make/make /usr/bin/make
