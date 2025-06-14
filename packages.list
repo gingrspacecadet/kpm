@@ -11,4 +11,4 @@ cmsg
 cc
 make
 musl
-git
+apk
