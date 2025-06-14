@@ -65,7 +65,7 @@ int download(const char *url, const char *outpath) {
 int find_in_list(const char *listpath, const char *pkg) {
     FILE *f = fopen(listpath, "r");
     if (!f) {
-        fprintf(stderr, "ERROR: couldn’t open package list '%s': %s\n",
+        fprintf(stderr, "ERROR: couldn't open package list '%s': %s\n",
                 listpath, strerror(errno));
         return 0;
     }
@@ -605,6 +605,10 @@ int install_from_file(const char *pkg_path) {
 int uninstall_package(const char *pkg) {
     char pkgdir[MAX_LINE];
     snprintf(pkgdir, sizeof(pkgdir), "%s/%s", INSTALL_DIR, pkg);
+
+    if (strcmp("kpm", pkg)) {
+        run_cmd("rm -f /usr/local/bin/kpm");
+    }
 
     // 1) Run uninstall.sh
     char script[MAX_LINE];
