@@ -8,7 +8,5 @@ kindlefetch
 kwordle
 kpmgui
 cmsg
-cc
 make
 musl
-apk

@@ -664,6 +664,21 @@ int uninstall_package(const char *pkg) {
     return 1;
 }
 
+int x(char subop, const char *pkg) {
+    switch (subop) {
+        case 'i':
+            printf("%s", INSTALL_DIR);
+            break;
+        case 'm':
+            printf("%s", MIRRORS_CONF);
+            break;
+        case 't':
+            printf("%s", TMP_LIST_FILE);
+            break;
+    }
+    return 0;
+}
+
 int query_package_local(const char *pkg) {
     if (pkg != NULL) {
         if (find_in_list(INSTALLED_LIST, pkg)) {
@@ -752,29 +767,41 @@ int query_package_remote(const char *pkg) {
 }
 
 void help(char op) {
-    if (op == 'Q') {
-        fprintf(stderr,
-            "Usage:\n"
-            "  -Ql [<pkg>]   list local packages (or check one)\n"
-            "  -Qr [<pkg>]   list remote packages (or check one)\n");
-    } else if (op == 'C') {
-        fprintf(stderr,
-            "Usage:\n"
-            "  -Cc           open config file\n"
-            "  -Cm           open mirror config file\n");
-    } else {
-        fprintf(stderr,
-            "Usage:\n"
-            "  kpm [OPTIONS]\n\n"
-            "Short options:\n"
-            "  -S <pkg>      install package\n"
-            "  -R <pkg>      remove package\n"
-            "  -Q <pkg>      query\n"
-            "  -U <pkg>      install a package from local zip\n"
-            "  -C            configuring\n\n"
-            "Long options:\n"
-            "  --help        show this help and exit\n"
-            "  --version     show version and exit\n");
+    switch (op) {
+        case 'Q':
+            fprintf(stderr,
+                "Usage:\n"
+                "  -Ql [<pkg>]   list local packages (or check one)\n"
+                "  -Qr [<pkg>]   list remote packages (or check one)\n");
+            break;
+        case 'C':
+            fprintf(stderr,
+                "Usage:\n"
+                "  -Cc           open config file\n"
+                "  -Cm           open mirror config file\n");
+            break;
+        case 'X':
+            fprintf(stderr,
+                "Usage:\n"
+                "  -Xi           print INSTALL_DIR\n"
+                "  -Xm           print MIRRORS_CONF\n"
+                "  -Xt           print TEMP_LIST_FILE\n");
+            break;
+        default:
+            fprintf(stderr,
+                "Usage:\n"
+                "  kpm [OPTIONS]\n\n"
+                "Short options:\n"
+                "  -S <pkg>      install package\n"
+                "  -R <pkg>      remove package\n"
+                "  -Q <pkg>      query\n"
+                "  -U <pkg>      install a package from local zip\n"
+                "  -C            configuring\n"
+                "  -X            prints config variables\n\n"
+                "Long options:\n"
+                "  --help        show this help and exit\n"
+                "  --version     show version and exit\n");
+            break;
     }
     
     // ... other cases for -S and -R if you like ...
@@ -813,7 +840,7 @@ int do_config(char subop, const char *unused_pkg) {
         path = MIRRORS_CONF;
         break;
       default:
-        fprintf(stderr, "Unknown config sub‐option '%c'\n", subop);
+        fprintf(stderr, "Unknown config sub-option '%c'\n", subop);
         return 1;
     }
 
@@ -837,6 +864,10 @@ int do_config(char subop, const char *unused_pkg) {
     }
 
     return 0;
+}
+
+int do_x(char subop, const char *pkg) {
+    return x(subop, pkg) ? 0 : 1;
 }
 
 int main(int argc, char *argv[]) {
@@ -879,6 +910,9 @@ int main(int argc, char *argv[]) {
         case 'C':
             if (!subop) help(op);
             return do_config(subop, pkg);
+        case 'X':
+            if (!subop) help(op);
+            return do_x(subop, pkg);
         default:
             help(op);
     }
