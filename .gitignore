@@ -5,3 +5,4 @@ mnt/
 .vscode/
 a.out
 kpm-gui
+*.zip
