@@ -19,9 +19,10 @@ chmod +x /usr/local/bin/kpm
 # Installed packages list
 mkdir -p /mnt/us/kpm
 touch /mnt/us/kpm/packages.list
+touch /mnt/us/kpm/kpm_packages.list
 
 # Config files
-echo "Creating config files..."
+echo "Creating config files..."mkdir -p /tmp/kpm
 mkdir -p /etc/kpm
 cat > /etc/kpm/kpm_mirrors.conf << 'EOF'
 https://raw.githubusercontent.com/gingrspacecadet/kpm/refs/heads/main/packages.list https://github.com/gingrspacecadet/kpm/releases/download/{pkg}/{pkg}.zip
@@ -34,7 +35,7 @@ INSTALL_DIR=/mnt/us/kpm/packages
 # Mirror config file
 MIRRORS_CONF=/etc/kpm/kpm_mirrors.conf
 # Package cache directory
-TMP_LIST_FILE=/tmp/kpm/kpm_packages.list
+TMP_LIST_FILE=/mnt/us/kpm/kpm_packages.list
 EOF
 
 # Download directories
@@ -42,7 +43,6 @@ echo "Creating download & install directories..."
 mkdir -p /mnt/us/kpm
 mkdir -p /mnt/us/kpm/packages
 mkdir -p /mnt/us/kpm/packages/bin
-mkdir -p /tmp/kpm
 
 echo "Configuring PATH in ~/.bashrc..."
 
