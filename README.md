@@ -7,11 +7,9 @@ Package manager for kindle
 `unzip` and/or `tar` for extracting packages<br>
 
 ## Download
-Run the following commands on your kindle:
+Run the following script on your kindle:
 ```bash
-curl https://raw.githubusercontent.com/gingrspacecadet/kpm/main/install-kpm.sh > install-kpm.sh
-chmod +x install-kpm.sh
-./install-kpm.sh
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/gingrspacecadet/kpm/main/install-kpm.sh)"
 ```
 
 ## Miscellaneous
