@@ -320,7 +320,7 @@ static int ensure_dir(const char *path, mode_t mode) {
 
 // Helper: run a command via fork+execvp and wait for it
 static int run_cmd(char *const argv[]) {
-    run("mntroot rw");
+    system("mntroot rw");  // Ensure we can write to /mnt/us
     pid_t pid = fork();
     if (pid < 0) {
         perror("fork");
