@@ -15,16 +15,15 @@
 #define VERSION "1.1.0"
 
 // These will be filled in by load_config()
-char INSTALL_DIR[MAX_LINE];
-char MIRRORS_CONF[MAX_LINE];
-char TMP_LIST_FILE[MAX_LINE];
+static char INSTALL_DIR[MAX_LINE];
+static char MIRRORS_CONF[MAX_LINE];
+static char TMP_LIST_FILE[MAX_LINE];
 
 void load_config(const char *path) {
     FILE *file = fopen(path, "r");
     if (!file) {
-        fprintf(stderr, "Failed to open config file: %s: %s\n",
-                path, strerror(errno));
-        exit(1);
+        fprintf(stderr, "Failed to open config file: %s: %s\n", path, strerror(errno));
+        exit(EXIT_FAILURE);
     }
 
     char line[MAX_LINE];
@@ -339,10 +338,15 @@ static int run_cmd(char *const argv[]) {
     if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
         return 0;
     } else {
-        fprintf(stderr, "%s failed with exit code %d\n",
-                argv[0], WEXITSTATUS(status));
+        fprintf(stderr, "%s failed with exit code %d\n", argv[0], WEXITSTATUS(status));
         return -1;
     }
+}
+
+// Helper: run a shell command string (for simple cases)
+static int run_cmd_str(const char *cmd) {
+    char *const argv[] = {"sh", "-c", (char *)cmd, NULL};
+    return run_cmd(argv);
 }
 
 int fetch_package(const char *mirror_fmt, const char *pkg) {
@@ -606,8 +610,8 @@ int uninstall_package(const char *pkg) {
     char pkgdir[MAX_LINE];
     snprintf(pkgdir, sizeof(pkgdir), "%s/%s", INSTALL_DIR, pkg);
 
-    if (strcmp("kpm", pkg)) {
-        run_cmd("rm -f /usr/local/bin/kpm");
+    if (strcmp(pkg, "kpm") == 0) {
+        run_cmd_str("rm -f /usr/local/bin/kpm");
     }
 
     // 1) Run uninstall.sh
@@ -899,7 +903,7 @@ int main(int argc, char *argv[]) {
             if (subop || argc!=3) help(op);
             return do_install(pkg);
         case 'R':
-            if (subop || argc<3) help(op);
+            if (subop || argc!=3) help(op);
             return do_remove(pkg);
         case 'Q':
             if (!subop) help(op);
