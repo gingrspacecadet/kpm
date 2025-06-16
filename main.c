@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -49,6 +50,27 @@ void load_config(const char *path) {
         }
     }
     fclose(file);
+}
+
+// Allocates a formatted string (like asprintf)
+char *format_string(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    
+    // First pass: find required length
+    int length = vsnprintf(NULL, 0, fmt, args);
+    va_end(args);
+
+    // Allocate memory (+1 for null terminator)
+    char *str = malloc(length + 1);
+    if (!str) return NULL;
+
+    // Second pass: format into the buffer
+    va_start(args, fmt);
+    vsnprintf(str, length + 1, fmt, args);
+    va_end(args);
+
+    return str;
 }
 
 // Download URL to local path using curl (follows redirects, quiet, fails safely)
@@ -462,6 +484,10 @@ int install_from_mirrors(const char *pkg) {
     }
     char line[MAX_LINE];
     while (fgets(line, sizeof(line), mf)) {
+        // Skip comment lines and empty lines
+        if (line[0] == '#' || line[0] == '\n' || line[0] == '\r')
+            continue;
+
         char list_url[MAX_LINE], pkg_fmt[MAX_LINE];
         if (sscanf(line, "%s %s", list_url, pkg_fmt) != 2) continue;
 
@@ -500,7 +526,6 @@ int install_from_mirrors(const char *pkg) {
     return 0;
 }
 
-
 int install_package(const char *pkg) {
     if (find_in_list(INSTALLED_LIST, pkg)) {
         printf("Package '%s' already installed.\n", pkg);
@@ -521,7 +546,10 @@ int install_package(const char *pkg) {
         }
     }
     
-    update_kual_menu();
+    if (strcmp(collect_lines("kpm -Ql kpmgui")[0], format_string("Package 'kpmgui' is installed (listed in %s).", INSTALL_DIR)) == 0) {
+        // If kpmgui is installed, update the KUAL menu
+        update_kual_menu();
+    }
     return 1;
 }
 
@@ -664,7 +692,10 @@ int uninstall_package(const char *pkg) {
         return 0;
     }
 
-    update_kual_menu();
+    if (strcmp(collect_lines("kpm -Ql kpmgui")[0], format_string("Package 'kpmgui' is installed (listed in %s).", INSTALL_DIR)) == 0) {
+        // If kpmgui is installed, update the KUAL menu
+        update_kual_menu();
+    }
     printf("Package '%s' removed and list updated.\n", pkg);
     return 1;
 }
