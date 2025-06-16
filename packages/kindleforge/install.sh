@@ -8,8 +8,7 @@ echo "Extracting package..."
 unzip -q "$TEMP_DIR/kindleforge.zip" -d "$TEMP_DIR"
 
 echo "Installing to device..."
-mkdir -p /mnt/us/documents/kindleforge
-cp -r "$TEMP_DIR/KindleForge-master"/* /mnt/us/documents/kindleforge/
+cp -r "$TEMP_DIR/KindleForge-master/KindleForge" /mnt/us/documents/
 cp "$TEMP_DIR"/KindleForge.sh /mnt/us/documents/
 chmod +x /mnt/us/documents/KindleForge.sh
 
