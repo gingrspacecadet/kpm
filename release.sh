@@ -37,4 +37,8 @@ fi
 echo "Creating GitHub release '$TAG' with asset '$FILE'..."
 gh release create "$TAG" "$FILE" --title "$TITLE" --notes "$NOTES" --latest
 
+git add main.c
+git commit -m "Release $TAG: Add kpm binary"
+git push origin main
+
 echo "Release '$TAG' created successfully."

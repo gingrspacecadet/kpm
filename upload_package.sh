@@ -59,6 +59,10 @@ for pkg in "${pkgs[@]}"; do
   # Create the GitHub release with the zip asset
   gh release create "$pkg" "$zipfile" --title "$pkg" --notes "Auto-uploaded package: $pkg" --latest
 
+  git add packages/"$pkg"
+  git commit -m "Updated package $pkg"
+  git push origin main
+
   echo "Package \"$pkg\" uploaded to GitHub release."
 
   rm "$zipfile"
