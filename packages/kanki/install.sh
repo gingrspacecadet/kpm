@@ -2,7 +2,7 @@
 echo "Installing kanki..."
 TEMP_DIR=$(mktemp -d)
 echo "Downloading kanki package..."
-curl -L https://github.com/crizmo/KAnki/releases/download/v1.1.0/kanki.zip -o "$TEMP_DIR/kanki.zip"
+curl -fsSL https://github.com/crizmo/KAnki/releases/download/v1.1.0/kanki.zip -o "$TEMP_DIR/kanki.zip"
 
 echo "Extracting package..."
 unzip -q "$TEMP_DIR/kanki.zip" -d "$TEMP_DIR"
