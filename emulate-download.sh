@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-# 1) Ensure we have qemu-user emulators
-sudo pacman -Sy --noconfirm --needed qemu-user wget
-
 # 2) Config
 ARCH="armhf"
 ALPINE_VERSION="3.18.0"
