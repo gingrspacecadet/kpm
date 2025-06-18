@@ -47,8 +47,8 @@ fi
 EOF
 chmod +x enter-kindle.sh
 
-./enter-kindle -c apk upgrade
-./enter-kindle -c apk add build-base gcc
+./enter-kindle.sh -c apk upgrade
+./enter-kindle.sh -c apk add build-base gcc
 
 echo
 echo "✅ Setup complete!"
