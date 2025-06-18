@@ -1,6 +1,6 @@
 #!/bin/sh
 echo "Installing kindleforge..."
-TEMP_DIR=/tmp/kpm
+TEMP_DIR=$(mktemp -d)
 echo "Downloading kindleforge package..."
 curl -L https://github.com/polish-penguin-dev/KindleForge/archive/refs/heads/master.zip -o "$TEMP_DIR/kindleforge.zip"
 
