@@ -47,9 +47,6 @@ fi
 EOF
 chmod +x enter-kindle.sh
 
-./enter-kindle.sh -c apk upgrade
-./enter-kindle.sh -c apk add build-base gcc
-
 echo
 echo "✅ Setup complete!"
 echo "→ To enter your ARMv7 environment, run:"
