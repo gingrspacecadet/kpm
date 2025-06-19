@@ -34,9 +34,11 @@ rm -rf "\$TEMP_DIR"
 echo "$pkgname package installed successfully."
 EOF
 
-cat > packages/$pkgname/install.sh << EOF
+cat > packages/$pkgname/uninstall.sh << EOF
 #!/bin/sh
 echo "Uninstalling $pkgname..."
 \"Your uninstallation command here\"
 echo "$pkgname package uninstalled successfully."
 EOF
+
+echo $pkgname >> packages.list
