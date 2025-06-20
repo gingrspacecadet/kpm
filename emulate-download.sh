@@ -47,6 +47,8 @@ fi
 EOF
 chmod +x enter-kindle.sh
 
+rm $TARBALL
+
 echo
 echo "✅ Setup complete!"
 echo "→ To enter your ARMv7 environment, run:"

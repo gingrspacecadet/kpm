@@ -1,18 +1,21 @@
 #!/bin/sh
-echo "Installing gnome games..."
-TEMP_DIR=$(mktemp -d)
-echo "Downloading gnomegames package..."
-curl -L https://github.com/crazy-electron/GnomeGames4Kindle/releases/latest/download/gnomegames.zip -o "$TEMP_DIR/gnomegames.zip"
 
-echo "Extracting package..."
-unzip -q "$TEMP_DIR/gnomegames.zip" -d "$TEMP_DIR"
-mkdir -p /mnt/us/extensions/gnomegames
-cp -r "$TEMP_DIR/gnomegames"/* /mnt/us/extensions/gnomegames
+set -e
+echo "Installing GnomeGames..."
 
-echo "Installing to device..."
-cp "/mnt/us/extensions/gnomegames/shortcut_gnomechess.sh" "/mnt/us/documents"
-cp "/mnt/us/extensions/gnomegames/shortcut_gnomine.sh" "/mnt/us/documents"
+# Download + Extract
+mkdir -p /mnt/us/kforge
+curl -L -o /mnt/us/kforge/GnomeGames.zip https://github.com/crazy-electron/GnomeGames4Kindle/releases/latest/download/gnomegames.zip 
+unzip -q /mnt/us/kforge/GnomeGames.zip -d /mnt/us/kforge/
+mkdir -p /mnt/us/extensions/GnomeGames
+cp -r /mnt/us/kforge/GnomeGames/* /mnt/us/extensions/GnomeGames
 
-rm -rf "$TEMP_DIR"
+# Scriptlets
+cp /mnt/us/extensions/GnomeGames/shortcut_gnomechess.sh /mnt/us/documents
+cp /mnt/us/extensions/GnomeGames/shortcut_gnomine.sh /mnt/us/documents
 
-echo "gnomegames package installed successfully."
+rm -rf /mnt/us/kforge
+
+echo "GnomeGames Installation Complete."
+
+exit 0

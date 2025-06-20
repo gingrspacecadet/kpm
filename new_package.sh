@@ -27,7 +27,7 @@ echo "Extracting package..."
 unzip -q "\$TEMP_DIR/$pkgname.zip" -d "\$TEMP_DIR"
 
 echo "Installing to device..."
-\"Your installation command here\"
+"Your installation command here"
 
 rm -rf "\$TEMP_DIR"
 
@@ -37,7 +37,7 @@ EOF
 cat > packages/$pkgname/uninstall.sh << EOF
 #!/bin/sh
 echo "Uninstalling $pkgname..."
-\"Your uninstallation command here\"
+"Your uninstallation command here"
 echo "$pkgname package uninstalled successfully."
 EOF
 
