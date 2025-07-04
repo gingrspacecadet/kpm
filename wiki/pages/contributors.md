@@ -11,7 +11,7 @@ This page recognizes all the amazing people who have contributed to the KPM proj
 
 These individuals have created and maintained packages for the KPM ecosystem:
 
-- [Penguins](https://github.com/polish-penguin-dev) and [Serial-blocks](https://github.com/serial-blocks): Gambatte and GnomeGames install scripts
+- [Penguins](https://github.com/polish-penguin-dev) and [Serial-blocks](https://github.com/serial-blocks): Gambatte and GnomeGames install scripts 
 
 ## How to Be Recognized
 
