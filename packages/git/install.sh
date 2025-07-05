@@ -7,6 +7,7 @@ echo "Extracting package..."
 
 echo "Installing to device..."
 cp /mnt/us/kpm/packages/git/git /usr/bin/git
+cp -r /mnt/us/kpm/packages/git/git-core /usr/libexec/
 
 rm -rf "$TEMP_DIR"
 
