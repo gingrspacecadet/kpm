@@ -15,7 +15,6 @@
 #define MENU_JSON_PATH "/mnt/us/extensions/kpm/menu.json"
 #define VERSION "1.1.0"
 
-// These will be filled in by load_config()
 static char INSTALL_DIR[MAX_LINE];
 static char MIRRORS_CONF[MAX_LINE];
 static char TMP_LIST_FILE[MAX_LINE];
@@ -29,10 +28,8 @@ void load_config(const char *path) {
 
     char line[MAX_LINE];
     while (fgets(line, sizeof(line), file)) {
-        // strip CR/LF
         line[strcspn(line, "\r\n")] = '\0';
 
-        // skip empty or comment
         if (line[0]=='\0' || line[0]=='#') continue;
         char *eq = strchr(line, '=');
         if (!eq) continue;
@@ -52,20 +49,16 @@ void load_config(const char *path) {
     fclose(file);
 }
 
-// Allocates a formatted string (like asprintf)
 char *format_string(const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
     
-    // First pass: find required length
     int length = vsnprintf(NULL, 0, fmt, args);
     va_end(args);
 
-    // Allocate memory (+1 for null terminator)
     char *str = malloc(length + 1);
     if (!str) return NULL;
 
-    // Second pass: format into the buffer
     va_start(args, fmt);
     vsnprintf(str, length + 1, fmt, args);
     va_end(args);
@@ -73,16 +66,13 @@ char *format_string(const char *fmt, ...) {
     return str;
 }
 
-// Download URL to local path using curl (follows redirects, quiet, fails safely)
 int download(const char *url, const char *outpath) {
     char cmd[1024];
-    // -f: fail on HTTP error, -s: silent, -S: show errors, -L: follow redirects
     snprintf(cmd, sizeof(cmd),
              "curl -fsSL \"%s\" -o \"%s\"", url, outpath);
     return system(cmd);
 }
 
-// Search `listpath` for a line beginning with `pkg`, return 1 if found 
 int find_in_list(const char *listpath, const char *pkg) {
     FILE *f = fopen(listpath, "r");
     if (!f) {
@@ -93,13 +83,11 @@ int find_in_list(const char *listpath, const char *pkg) {
 
     char line[MAX_LINE];
     while (fgets(line, sizeof(line), f)) {
-        // strip trailing CR/LF
         char *p = line + strlen(line) - 1;
         while (p >= line && (*p == '\n' || *p == '\r')) {
             *p-- = '\0';
         }
 
-        // now line is a clean token; compare exactly
         if (strcmp(line, pkg) == 0) {
             fclose(f);
             return 1;
@@ -110,10 +98,6 @@ int find_in_list(const char *listpath, const char *pkg) {
     return 0;
 }
 
-
-// Runs a shell command (like "kpm -Qr") and returns a NULL-terminated array of
-// strdup’d strings (one per non-empty output line).  Caller must free with free_lines().
-// This version does NOT trim leading whitespace here—trimming is done later.
 static char **collect_lines(const char *cmd) {
     FILE *fp = popen(cmd, "r");
     if (!fp) return NULL;
@@ -123,12 +107,9 @@ static char **collect_lines(const char *cmd) {
     char buffer[MAX_LINE];
 
     while (fgets(buffer, sizeof(buffer), fp)) {
-        // Strip trailing CR/LF
         buffer[strcspn(buffer, "\r\n")] = '\0';
-        // Skip empty lines
         if (buffer[0] == '\0') continue;
 
-        // strdup the raw line; trimming is done later
         char *dup = strdup(buffer);
         if (!dup) break;
         char **tmp = realloc(lines, (count + 2) * sizeof(char *));
@@ -144,7 +125,6 @@ static char **collect_lines(const char *cmd) {
     return lines;
 }
 
-// Frees the array returned by collect_lines()
 static void free_lines(char **lines) {
     if (!lines) return;
     for (size_t i = 0; lines[i]; i++) {
@@ -153,8 +133,6 @@ static void free_lines(char **lines) {
     free(lines);
 }
 
-
-// Trim leading whitespace in-place (modifies `str`)
 static void trim_leading_whitespace(char *str) {
     char *p = str;
     while (*p && isspace((unsigned char)*p)) {
@@ -165,7 +143,6 @@ static void trim_leading_whitespace(char *str) {
     }
 }
 
-// Checks whether 'needle' is in the NULL-terminated array 'haystack'
 static int in_list(char **haystack, const char *needle) {
     if (!haystack || !needle) return 0;
     for (size_t i = 0; haystack[i]; i++) {
@@ -176,13 +153,7 @@ static int in_list(char **haystack, const char *needle) {
     return 0;
 }
 
-// Updates the KUAL menu.json so that:
-//   - "Install Package" lists all (remote ∖ local) packages,
-//     skipping any remote line containing "https://" and trimming leading spaces.
-//   - "Remove Package" lists all local packages (trimmed).
-//   - Adds a "Configure KPM" entry at the end.
 static void update_kual_menu(void) {
-    // 1) Collect remote and local lists
     char **remote = collect_lines("kpm -Qr");
     char **local  = collect_lines("kpm -Ql");
 
@@ -192,7 +163,6 @@ static void update_kual_menu(void) {
         return;
     }
 
-    // 2) Open menu.json for writing (overwrite)
     FILE *jf = fopen(MENU_JSON_PATH, "w");
     if (!jf) {
         fprintf(stderr, "ERROR: Could not open %s for writing: %s\n",
@@ -202,7 +172,6 @@ static void update_kual_menu(void) {
         return;
     }
 
-    // 3) Write the JSON header
     fprintf(jf,
         "{\n"
         "	\"items\": [\n"
@@ -211,7 +180,6 @@ static void update_kual_menu(void) {
         "		\"priority\": 0,\n"
         "		\"items\": [\n");
 
-    // --- Installable Packages Submenu ---
     fprintf(jf,
         "		{\n"
         "			\"name\": \"Install Package\",\n"
@@ -220,13 +188,10 @@ static void update_kual_menu(void) {
 
     int first_install = 1;
     for (size_t i = 0; remote[i]; i++) {
-        // Trim leading whitespace
         trim_leading_whitespace(remote[i]);
-        // Skip any line containing "https://"
         if (strstr(remote[i], "https://")) {
             continue;
         }
-        // If remote[i] is not already in local[], we can install it
         if (!in_list(local, remote[i])) {
             if (!first_install) {
                 fprintf(jf, ",\n");
@@ -251,7 +216,6 @@ static void update_kual_menu(void) {
         "			]\n"
         "		},\n");
 
-    // --- Removable Packages Submenu ---
     fprintf(jf,
         "		{\n"
         "			\"name\": \"Remove Package\",\n"
@@ -260,7 +224,6 @@ static void update_kual_menu(void) {
 
     int first_remove = 1;
     for (size_t i = 0; local[i]; i++) {
-        // Trim leading whitespace
         trim_leading_whitespace(local[i]);
         if (!first_remove) {
             fprintf(jf, ",\n");
@@ -284,7 +247,6 @@ static void update_kual_menu(void) {
         "			]\n"
         "		},\n");
 
-    // --- Configure KPM action ---
     fprintf(jf,
         "		{\n"
         "			\"name\": \"Configure KPM\",\n"
@@ -295,7 +257,6 @@ static void update_kual_menu(void) {
         "			\"internal\": \"status Editing kpm.conf…\"\n"
         "		}\n");
 
-    // Close JSON arrays/objects
     fprintf(jf,
         "			]\n"
         "		}\n"
@@ -307,15 +268,12 @@ static void update_kual_menu(void) {
     free_lines(local);
 }
 
-// Helper to strip directory and suffix, turning "/foo/bar/pkg.tar.gz" into "pkg"
 static void get_pkg_name(const char *path, char *out_pkg, size_t sz) {
     const char *base = strrchr(path, '/');
     base = base ? base + 1 : path;
-    // copy into a temp buffer so we can mutate it
     char tmp[MAX_LINE];
     strncpy(tmp, base, MAX_LINE-1);
     tmp[MAX_LINE-1] = '\0';
-    // strip known suffixes
     const char *sufs[] = {".tar.gz", ".tar.xz",  ".zip", NULL};
     for (int i = 0; sufs[i]; i++) {
         size_t len = strlen(sufs[i]);
@@ -325,12 +283,10 @@ static void get_pkg_name(const char *path, char *out_pkg, size_t sz) {
             break;
         }
     }
-    // copy to out_pkg
     strncpy(out_pkg, tmp, sz-1);
     out_pkg[sz-1] = '\0';
 }
 
-// Helper: create one directory, ignore EEXIST
 static int ensure_dir(const char *path, mode_t mode) {
     if (mkdir(path, mode) == 0 || errno == EEXIST) {
         return 0;
@@ -340,9 +296,8 @@ static int ensure_dir(const char *path, mode_t mode) {
     }
 }
 
-// Helper: run a command via fork+execvp and wait for it
 static int run_cmd(char *const argv[]) {
-    system("{\nmntroot rw\n} &> /dev/null");  // Ensure we can write to /mnt/us
+    system("{\nmntroot rw\n} &> /dev/null");
     pid_t pid = fork();
     if (pid < 0) {
         perror("fork");
@@ -366,7 +321,6 @@ static int run_cmd(char *const argv[]) {
     }
 }
 
-// Helper: run a shell command string (for simple cases)
 static int run_cmd_str(const char *cmd) {
     char *const argv[] = {"sh", "-c", (char *)cmd, NULL};
     return run_cmd(argv);
@@ -377,7 +331,6 @@ int fetch_package(const char *mirror_fmt, const char *pkg) {
     const char *marker = "{pkg}";
     size_t mlen = strlen(marker), plen = strlen(pkg);
 
-    // Build URL
     const char *s = mirror_fmt;
     char *d = url;
     while (*s && (d - url) < (int)sizeof(url) - 1) {
@@ -392,7 +345,6 @@ int fetch_package(const char *mirror_fmt, const char *pkg) {
     }
     *d = '\0';
 
-    // Determine suffix
     const char *slash = strrchr(url, '/');
     const char *dot = slash ? strrchr(slash, '.') : NULL;
     const char *suffix = dot ? dot : "";
@@ -400,34 +352,29 @@ int fetch_package(const char *mirror_fmt, const char *pkg) {
     if (strcmp(pkg, "kpm") == 0) {
         char *last_dot = strrchr(url, '.');
         if (last_dot && last_dot > strrchr(url, '/')) {
-            *last_dot = '\0'; // Truncate the URL at the last dot
+            *last_dot = '\0';
         }
     }
 
-    // Paths
     snprintf(outpath, sizeof(outpath), "%s/%s%s", INSTALL_DIR, pkg, suffix);
     snprintf(pkgdir,  sizeof(pkgdir),  "%s/%s", INSTALL_DIR, pkg);
 
-    // Always ensure INSTALL_DIR exists...
     if (ensure_dir(INSTALL_DIR, 0755)) {
         return 0;
     }
 
-    // But don’t make a sub‐dir for "kpm", or it blocks curl
     if (strcmp(pkg, "kpm") != 0) {
         if (ensure_dir(pkgdir, 0755)) {
             return 0;
         }
     }
 
-    // Download archive
     printf("Downloading %s -> %s\n", url, outpath);
     if (download(url, outpath) != 0) {
         fprintf(stderr, "Download failed\n");
         return 0;
     }
 
-    // Extract (skip for kpm, which is not an archive)
     if (strcmp(pkg, "kpm") != 0) {
         if (strstr(suffix, ".zip")) {
             char *const args[] = { "unzip", "-o", outpath, "-d", pkgdir, NULL };
@@ -449,7 +396,6 @@ int fetch_package(const char *mirror_fmt, const char *pkg) {
             return 0;
         }
 
-        // install.sh
         char script[MAX_LINE];
         snprintf(script, sizeof(script), "%s/install.sh", pkgdir);
         if (access(script, F_OK) != 0) {
@@ -457,13 +403,11 @@ int fetch_package(const char *mirror_fmt, const char *pkg) {
             return 0;
         }
 
-        // Make it executable
         if (chmod(script, 0755) != 0) {
             perror("chmod install.sh");
             return 0;
         }
 
-        // Run it directly
         printf("Running install script: %s\n", script);
         char *const runargs[] = { script, NULL };
         if (run_cmd(runargs) < 0) {
@@ -484,7 +428,6 @@ int install_from_mirrors(const char *pkg) {
     }
     char line[MAX_LINE];
     while (fgets(line, sizeof(line), mf)) {
-        // Skip comment lines and empty lines
         if (line[0] == '#' || line[0] == '\n' || line[0] == '\r')
             continue;
 
@@ -502,7 +445,6 @@ int install_from_mirrors(const char *pkg) {
             int result = fetch_package(pkg_fmt, pkg);
 
             if (result && strcmp(pkg, "kpm") == 0) {
-                // Replace /usr/local/bin/kpm with /mnt/us/kpm/packages/kpm
                 char *const cp_argv[] = {
                     "cp",
                     "/mnt/us/kpm/packages/kpm",
@@ -535,9 +477,8 @@ int install_package(const char *pkg) {
         return 0;
     }
 
-    printf("Successfully installed %s\n", pkg);
+    printf("1fully installed %s\n", pkg);
     
-    // don’t record kpm itself
     if (strcmp(pkg, "kpm") != 0) {
         FILE *f = fopen(INSTALLED_LIST, "a");
         if (f) {
@@ -547,37 +488,27 @@ int install_package(const char *pkg) {
     }
     
     if (strcmp(collect_lines("kpm -Ql kpmgui")[0], format_string("Package 'kpmgui' is installed (listed in %s).", INSTALL_DIR)) == 0) {
-        // If kpmgui is installed, update the KUAL menu
         update_kual_menu();
     }
     return 1;
 }
 
-// Install directly from a local file path.
-// Returns 1 on success, 0 on failure.
 int install_from_file(const char *pkg_path) {
     char pkg[MAX_LINE];
     get_pkg_name(pkg_path, pkg, sizeof(pkg));
 
-    // 1) Check if already installed
     if (find_in_list(INSTALLED_LIST, pkg)) {
         printf("Package '%s' already installed.\n", pkg);
         return 1;
     }
 
-    // 2) Prepare install paths
     char outpath[MAX_LINE], pkgdir[MAX_LINE];
-    // For archives, we keep the suffix in the outpath to aid extraction
     snprintf(outpath, sizeof(outpath), "%s/%s", INSTALL_DIR, pkg);
     snprintf(pkgdir, sizeof(pkgdir),  "%s/%s", INSTALL_DIR, pkg);
 
-    // 3) Ensure directories
     if (ensure_dir(INSTALL_DIR, 0755)) return 0;
-    // For a binary (no extension), no pkgdir yet; for archives we'll extract there
-    // But create pkgdir anyway, extraction will use it
     if (ensure_dir(pkgdir, 0755)) return 0;
 
-    // 4) Copy the file into place
     {
         char *const cp_argv[] = { "cp", pkg_path, outpath, NULL };
         printf("Copying %s -> %s\n", pkg_path, outpath);
@@ -587,7 +518,6 @@ int install_from_file(const char *pkg_path) {
         }
     }
 
-    // 5) If it’s an archive, extract it
     if (strstr(pkg_path, ".zip")) {
         char *const args[] = { "unzip", "-o", outpath, "-d", pkgdir, NULL };
         printf("Extracting ZIP...\n");
@@ -600,11 +530,8 @@ int install_from_file(const char *pkg_path) {
         char *const args[] = { "tar", "-xJf", outpath, "-C", pkgdir, NULL };
         printf("Extracting tar.xz...\n");
         if (run_cmd(args) < 0) return 0;
-    } else {
-        // not an archive: assume it’s a standalone binary, no extraction
     }
 
-    // 6) If there’s an install.sh, run it
     {
         char script[MAX_LINE];
         snprintf(script, sizeof(script), "%s/install.sh", pkgdir);
@@ -622,7 +549,6 @@ int install_from_file(const char *pkg_path) {
         }
     }
 
-    // 7) Record in INSTALLED_LIST (skip kpm)
     if (strcmp(pkg, "kpm") != 0) {
         FILE *f = fopen(INSTALLED_LIST, "a");
         if (f) {
@@ -631,7 +557,7 @@ int install_from_file(const char *pkg_path) {
         }
     }
 
-    printf("Successfully installed '%s' from local file\n", pkg);
+    printf("1fully installed '%s' from local file\n", pkg);
     return 1;
 }
 
@@ -643,7 +569,6 @@ int uninstall_package(const char *pkg) {
         run_cmd_str("rm -f /usr/local/bin/kpm");
     }
 
-    // 1) Run uninstall.sh
     char script[MAX_LINE];
     snprintf(script, sizeof(script), "%s/uninstall.sh", pkgdir);
     if (access(script, F_OK) != 0) {
@@ -661,7 +586,6 @@ int uninstall_package(const char *pkg) {
         return 0;
     }
 
-    // 2) Remove from INSTALLED_LIST
     FILE *in = fopen(INSTALLED_LIST, "r");
     if (!in) {
         perror("fopen INSTALLED_LIST");
@@ -678,7 +602,6 @@ int uninstall_package(const char *pkg) {
 
     char line[MAX_LINE];
     while (fgets(line, sizeof(line), in)) {
-        // strip newline
         line[strcspn(line, "\r\n")] = '\0';
         if (strcmp(line, pkg) != 0) {
             fprintf(out, "%s\n", line);
@@ -693,7 +616,6 @@ int uninstall_package(const char *pkg) {
     }
 
     if (strcmp(collect_lines("kpm -Ql kpmgui")[0], format_string("Package 'kpmgui' is installed (listed in %s).", INSTALL_DIR)) == 0) {
-        // If kpmgui is installed, update the KUAL menu
         update_kual_menu();
     }
     printf("Package '%s' removed and list updated.\n", pkg);
@@ -726,18 +648,16 @@ int query_package_local(const char *pkg) {
                     pkg, INSTALLED_LIST);
         }
     } else {
-        // Print all installed packages
         FILE *f = fopen(INSTALLED_LIST, "r");
         if (!f) {
             fprintf(stderr, "Failed to open installed list '%s': %s\n",
                     INSTALLED_LIST, strerror(errno));
-            return 1;  // or return an error code, depending on your function signature
+            return 1;
         }
 
         printf("Installed packages:\n");
         char line[MAX_LINE];
         while (fgets(line, sizeof(line), f)) {
-            // fgets() keeps the newline, so this prints one package per line
             printf("  %s", line);
         }
 
@@ -784,7 +704,6 @@ int query_package_remote(const char *pkg) {
             } else {
                 char line[MAX_LINE];
                 while (fgets(line, sizeof(line), f)) {
-                    // fgets() includes the newline, so it prints one package per line
                     printf("  %s", line);
                 }
                 fclose(f);
@@ -840,7 +759,6 @@ void help(char op) {
             break;
     }
     
-    // ... other cases for -S and -R if you like ...
     exit(1);
 }
 
@@ -867,7 +785,6 @@ int do_query(char subop, const char *pkg) {
 int do_config(char subop, const char *unused_pkg) {
     const char *path;
 
-    // Choose which file to edit
     switch (subop) {
       case 'c':
         path = CONFIG_DIR;
@@ -880,20 +797,17 @@ int do_config(char subop, const char *unused_pkg) {
         return 1;
     }
 
-    // Determine editor
     const char *editor = getenv("EDITOR");
     if (!editor || !*editor) {
-        editor = "vi";  // fallback
+        editor = "vi";
     }
 
-    // Build argv[] for execvp
     char *const argv[] = {
         (char *)editor,
         (char *)path,
         NULL
     };
 
-    // Launch the editor
     if (run_cmd(argv) < 0) {
         fprintf(stderr, "Failed to launch editor '%s' on %s\n", editor, path);
         return 1;
@@ -909,7 +823,6 @@ int do_x(char subop, const char *pkg) {
 int main(int argc, char *argv[]) {
     load_config(CONFIG_DIR);
 
-    // 1) Long‐option support
     if (argc == 2) {
         if (strcmp(argv[1], "--version") == 0) {
             printf("kpm version %s\n", VERSION);
@@ -921,13 +834,12 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // 2) Fall back to existing short-option parsing
     if (argc < 2 || argv[1][0] != '-' || argv[1][1] == '\0') {
         help('\0');
     }
 
     char op    = argv[1][1];
-    char subop = argv[1][2];  // '\0' if none
+    char subop = argv[1][2];
     const char *pkg = argv[2];
 
     switch (op) {
@@ -952,5 +864,5 @@ int main(int argc, char *argv[]) {
         default:
             help(op);
     }
-    return 1;  // never reached
+    return 1;
 }
