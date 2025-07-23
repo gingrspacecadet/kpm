@@ -7,6 +7,7 @@ ALPINE_VERSION="3.18.0"
 ROOTFS_URL="https://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSION%.*}/releases/${ARCH}/alpine-minirootfs-${ALPINE_VERSION}-${ARCH}.tar.gz"
 TARBALL="alpine-minirootfs-${ALPINE_VERSION}-${ARCH}.tar.gz"
 ROOTFS_DIR="alpine-rootfs"
+ROOTFS_PATH="$HOME/$ROOTFS_DIR"
 
 # 3) Download minirootfs if needed
 if [ ! -f "$TARBALL" ]; then
@@ -14,19 +15,19 @@ if [ ! -f "$TARBALL" ]; then
   wget -q "$ROOTFS_URL" -O "$TARBALL"
 fi
 
-# 4) Unpack into alpine-rootfs/
-echo "[*] Unpacking rootfs to $ROOTFS_DIR/"
-rm -rf "$ROOTFS_DIR"
-mkdir -p "$ROOTFS_DIR"
-tar -xzf "$TARBALL" -C "$ROOTFS_DIR"
+# 4) Unpack into $HOME/alpine-rootfs/
+echo "[*] Unpacking rootfs to $ROOTFS_PATH/"
+rm -rf "$ROOTFS_PATH"
+mkdir -p "$ROOTFS_PATH"
+tar -xzf "$TARBALL" -C "$ROOTFS_PATH"
 
 # 5) Set up resolv.conf so networking works inside
-echo "nameserver 1.1.1.1" > "$ROOTFS_DIR/etc/resolv.conf"
+echo "nameserver 1.1.1.1" > "$ROOTFS_PATH/etc/resolv.conf"
 
 # 6) Create launcher script
 cat > enter-kindle.sh << 'EOF'
 #!/usr/bin/env bash
-ROOTFS="alpine-rootfs"
+ROOTFS="$HOME/alpine-rootfs"
 
 if [[ "$1" == "-c" && -n "$2" ]]; then
     CMD="$2"
