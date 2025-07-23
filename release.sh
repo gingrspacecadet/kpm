@@ -2,7 +2,7 @@
 set -euo pipefail
 
 TAG="kpm"
-FILE="out/kpm"
+FILE="kpm"
 TITLE="kpm"
 NOTES="Auto-uploaded kpm binary"
 

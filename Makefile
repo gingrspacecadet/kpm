@@ -1,8 +1,7 @@
-EMULATOR := ./enter-kindle.sh
 OUT_DIR := out
 BIN_NAME := kpm
-SRC_PATH := /main.c
-BUILD_CMD := gcc -static -o /root/$(BIN_NAME) $(SRC_PATH)
+SRC_PATH := main.c
+BUILD_CMD := kindle-gcc -static -o $(BIN_NAME) $(SRC_PATH)
 
 .PHONY: all clean move local
 
@@ -15,18 +14,10 @@ local:
 
 $(OUT_DIR)/$(BIN_NAME):
 	@echo "[*] Building in emulated environment..."
-	cp main.c alpine-rootfs/
-	$(EMULATOR) -c '$(BUILD_CMD)'
-	@mkdir -p $(OUT_DIR)
-	cp alpine-rootfs/root/$(BIN_NAME) $(OUT_DIR)/
+	$(BUILD_CMD)
 	./release.sh
+	clean
 
 clean:
-	rm -f $(OUT_DIR)/$(BIN_NAME)
+	rm -f $(BIN_NAME)
 	$(EMULATOR) -c 'rm -f /root/$(BIN_NAME)'
-
-move:
-	cp main.c alpine-rootfs/kpm-main/
-	@echo "[*] Building in emulated environment..."
-	$(EMULATOR) -c 'gcc -o main kpm-main/main.c'
-	$(EMULATOR)
