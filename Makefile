@@ -20,4 +20,3 @@ $(OUT_DIR)/$(BIN_NAME):
 
 clean:
 	rm -f $(BIN_NAME)
-	$(EMULATOR) -c 'rm -f /root/$(BIN_NAME)'
