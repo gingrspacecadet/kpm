@@ -1,0 +1,7 @@
+#!/bin/sh
+echo "Installing curl..."
+
+cp $(kpm -Xi)/curl/curl /usr/bin/curl
+cp $(kpm -Xi)/curl/libcurl.so.4 /usr/lib/
+
+echo "curl package installed successfully."

@@ -1,0 +1,5 @@
+#!/bin/sh
+echo "Install hello..."
+cp $(kpm -Xi)/hello/hello $(kpm -Xi)/bin/hello
+chmod +x $(kpm -Xi)/bin/hello
+echo "Hello package installed successfully."

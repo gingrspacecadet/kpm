@@ -1,0 +1,2 @@
+#!/bin/sh
+mv $(kpm -Xi)/musl/ld-musl-armhf.so.1 /lib/ld-musl-armhf.so.1

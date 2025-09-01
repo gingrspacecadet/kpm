@@ -383,7 +383,7 @@ int fetch_package(const char *mirror_fmt, const char *pkg) {
     if (strcmp(pkg, "kpm") != 0) {
         if (strstr(suffix, ".zip")) {
             char *const args[] = { "unzip", "-o", outpath, "-d", pkgdir, NULL };
-            printf("Extracting ZIP...\n");
+            printf("Extracting zip...\n");
             if (run_cmd(args) < 0) return 0;
         }
         else if (strstr(suffix, ".tar.gz")) {
@@ -402,21 +402,21 @@ int fetch_package(const char *mirror_fmt, const char *pkg) {
         }
 
         char script[MAX_LINE];
-        snprintf(script, sizeof(script), "%s/install.sh", pkgdir);
+        snprintf(script, sizeof(script), "%s/install.kpm", pkgdir);
         if (access(script, F_OK) != 0) {
-            fprintf(stderr, "Error: install.sh not found in %s\n", pkgdir);
+            fprintf(stderr, "Error: install.kpm not found in %s\n", pkgdir);
             return 0;
         }
 
         if (chmod(script, 0755) != 0) {
-            perror("chmod install.sh");
+            perror("chmod install.kpm");
             return 0;
         }
 
         printf("Running install script: %s\n", script);
         char *const runargs[] = { script, NULL };
         if (run_cmd(runargs) < 0) {
-            fprintf(stderr, "install.sh failed\n");
+            fprintf(stderr, "install.kpm failed\n");
             return 0;
         }
     }
@@ -452,7 +452,7 @@ int install_from_mirrors(const char *pkg) {
             if (result && strcmp(pkg, "kpm") == 0) {
                 char *const cp_argv[] = {
                     "cp",
-                    "/mnt/us/kpm/packages/kpm",
+                    "$(kpm -Xi)/kpm",
                     "/usr/local/bin/kpm",
                     NULL
                 };
@@ -481,8 +481,6 @@ int install_package(const char *pkg) {
     if (!install_from_mirrors(pkg)) {
         return 0;
     }
-
-    printf("1fully installed %s\n", pkg);
     
     if (strcmp(pkg, "kpm") != 0) {
         FILE *f = fopen(INSTALLED_LIST, "a");
@@ -539,16 +537,16 @@ int install_from_file(const char *pkg_path) {
 
     {
         char script[MAX_LINE];
-        snprintf(script, sizeof(script), "%s/install.sh", pkgdir);
+        snprintf(script, sizeof(script), "%s/install.kpm", pkgdir);
         if (access(script, F_OK) == 0) {
             if (chmod(script, 0755) != 0) {
-                perror("chmod install.sh");
+                perror("chmod install.kpm");
                 return 0;
             }
             printf("Running install script: %s\n", script);
             char *const runargs[] = { script, NULL };
             if (run_cmd(runargs) < 0) {
-                fprintf(stderr, "install.sh failed\n");
+                fprintf(stderr, "install.kpm failed\n");
                 return 0;
             }
         }
@@ -575,19 +573,19 @@ int uninstall_package(const char *pkg) {
     }
 
     char script[MAX_LINE];
-    snprintf(script, sizeof(script), "%s/uninstall.sh", pkgdir);
+    snprintf(script, sizeof(script), "%s/uninstall.kpm", pkgdir);
     if (access(script, F_OK) != 0) {
-        fprintf(stderr, "Error: uninstall.sh not found in %s\n", pkgdir);
+        fprintf(stderr, "Error: uninstall.kpm not found in %s\n", pkgdir);
         return 0;
     }
     if (chmod(script, 0755) != 0) {
-        perror("chmod uninstall.sh");
+        perror("chmod uninstall.kpm");
         return 0;
     }
     printf("Running uninstall script: %s\n", script);
     char *const runargs[] = { script, NULL };
     if (run_cmd(runargs) < 0) {
-        fprintf(stderr, "uninstall.sh failed\n");
+        fprintf(stderr, "uninstall.kpm failed\n");
         return 0;
     }
 
@@ -825,10 +823,16 @@ int do_x(char subop, const char *pkg) {
     return x(subop, pkg) ? 0 : 1;
 }
 
+void add_to_path(char* path) {
+    char buffer[MAX_LINE];
+    snprintf(buffer, sizeof(buffer), "echo export PATH=%s/bin:$PATH >> /etc/profile", path);
+    system(buffer);
+}
+
 int main(int argc, char *argv[]) {
     system("mntroot rw > /dev/null 2>&1");
-    system("grep -qxF 'export PATH=\"/mnt/us/kpm/packages/bin:$PATH\"' /etc/profile || echo 'export PATH=\"/mnt/us/kpm/packages/bin:$PATH\"' >> /etc/profile");
     load_config(CONFIG_DIR);
+    add_to_path(INSTALL_DIR);
 
     if (argc == 2) {
         if (strcmp(argv[1], "--version") == 0) {

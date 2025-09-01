@@ -1,0 +1,24 @@
+### INSTALL TEMPLATE ###
+
+#!/bin/sh
+# Setup
+echo "Installing {pkg}..."
+
+# Download
+echo "Downloading {pkg} package..."
+
+# Extract
+echo "Extracting package..."
+
+# Install
+echo "Installing to device..."
+
+echo "{pkg} package installed successfully."
+
+### UNINSTALL TEMPLATE ###
+
+#!/bin/sh
+# Uninstall
+echo "Uninstalling {pkg}..."
+
+echo "{pkg} package uninstalled successfully."

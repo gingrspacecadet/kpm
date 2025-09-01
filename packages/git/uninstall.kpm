@@ -1,4 +1,5 @@
 #!/bin/sh
 echo "Uninstalling git..."
-rm /usr/bin/git
+rm $(kpm -Xi)/bin/git
+rm -r /usr/libexec/git-core
 echo "git package uninstalled successfully."

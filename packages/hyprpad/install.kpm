@@ -1,0 +1,5 @@
+#!/bin/sh
+echo "Installing hyprpad"
+cp $(kpm -Xi)/hyprpad/hyprpad $(kpm -Xi)/bin/hyprpad
+chmod +x $(kpm -Xi)/bin/hyprpad
+echo "Hyprpad package installed successfully."

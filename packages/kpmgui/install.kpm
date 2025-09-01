@@ -1,5 +1,5 @@
 #!/bin/sh
-START=/mnt/us/kpm/packages/kpmgui/
+START=$(kpm -Xi)/kpmgui/
 END=/mnt/us/extensions/kpm
 mkdir -p /mnt/us/extensions/kpm
 mkdir -p $END/bin

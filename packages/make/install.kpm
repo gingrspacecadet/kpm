@@ -1,0 +1,2 @@
+#!/bin/sh
+mv $(kpm -Xi)/make/make $(kpm -Xi)/bin/make
