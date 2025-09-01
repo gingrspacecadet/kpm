@@ -1,17 +1,7 @@
-## KPM Support
+## Support
 
-Need help with KPM? You've come to the right place. This page provides resources for getting support with KPM installation, configuration, and usage.
-
-### Common Issues and Solutions
-
-#### Installation Problems
-
-- **Installation script fails to download**: Check your network connection and make sure your Kindle can access GitHub
 - **Permission denied errors**: Make sure you're running the install script with appropriate permissions
 - **"Command not found" after installation**: Ensure that KPM's installation directory is in your PATH
-
-#### Package Management Issues
-
 - **Unable to find packages**: Check `/etc/kpm/kpm_mirrors.conf` for errors.
 - **Package installation fails**: Check for error messages that might indicate the cause, such as dependency issues or network problems
 - **Package works incorrectly**: Contact the package maintainer or check the package's documentation

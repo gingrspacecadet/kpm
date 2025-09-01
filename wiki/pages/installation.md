@@ -13,19 +13,23 @@ Before installing KPM, make sure you have the following:
 
 ### Installation Steps
 
-1. Open KTerm on your Kindle device
-2. Run the following command:
+To install KPM on your Kindle:
 
-```bash
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/gingrspacecadet/kpm/main/install-kpm.sh)"
-```
+1. Download the latest KPM release from [GitHub Releases](https://github.com/yourrepo/releases).
+2. Transfer the binary to your Kindle.
+3. Make it executable:
 
-3. The installation script will download the latest version of KPM and set it up on your device
-4. Once the installation is complete, you can verify it by running:
+   ```bash
+   chmod +x kpm
+   ```
 
-```bash
-kpm --version
-```
+4. Run KPM:
+
+   ```bash
+   ./kpm
+   ```
+
+See [Usage](usage.md) for basic commands.
 
 ### What the Installation Script Does
 

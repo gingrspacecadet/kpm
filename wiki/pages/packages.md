@@ -18,61 +18,19 @@ kpm -S kindlefetch
 
 ## Available Packages
 
-### blockamazon
-A utility to block Amazon services on your Kindle, providing more privacy.
+Browse the list of packages you can install with KPM:
 
-**Installation:**
-```bash
-kpm -S blockamazon
-```
+- [blockamazon](packages/blockamazon.md)
+- [gnomegames](packages/gnomegames.md)
+- [hello](packages/hello.md)
+- [hyprpad](packages/hyprpad.md)
+- [kanki](packages/kanki.md)
+- [kindlefetch](packages/kindlefetch.md)
+- [kwordle](packages/kwordle.md)
+- [make](packages/make.md)
+- [musl](packages/musl.md)
 
-### gnomegames
-A collection of classic GNOME games ported to Kindle.
-
-**Installation:**
-```bash
-kpm -S gnomegames
-```
-
-### hello
-A simple "Hello World" example package that demonstrates KPM's functionality.
-
-**Installation:**
-```bash
-kpm -S hello
-```
-
-### hyprpad
-A simple text editor for Kindle devices.
-
-**Installation:**
-```bash
-kpm -S hyprpad
-```
-
-### kanki
-A flashcard application for learning Japanese and other languages.
-
-**Installation:**
-```bash
-kpm -S kanki
-```
-
-### kindlefetch
-Simple CLI for downloading books from Anna's Archive directly to your Kindle
-
-**Installation:**
-```bash
-kpm -S kindlefetch
-```
-
-### kwordle
-A Wordle game clone for Kindle.
-
-**Installation:**
-```bash
-kpm -S kwordle
-```
+See each package page for details and installation instructions.
 
 ## Managing Installed Packages
 

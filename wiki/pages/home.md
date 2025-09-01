@@ -1,18 +1,7 @@
-# Welcome to KPM Wiki
+## Welcome to KPM
 
-Welcome to the official documentation for KPM - the Package Manager for Kindle.
-
-## What is KPM?
-KPM (Kindle Package Manager) is a lightweight tool that makes it easy to install and manage software packages on jailbroken Kindle devices. Inspired by package managers like pacman, it simplifies the process of finding, installing, and managing applications and utilities for your Kindle.
-
-## Key Features
-* Simple command-line interface
 * Repository-based package system
 * Easy installation and removal of packages
-* Support for package dependencies
-* Low resource footprint suitable for Kindle devices
-
-## Getting Started
 * [Installation Guide](/installation)
 * [Basic Usage](/usage)
 
