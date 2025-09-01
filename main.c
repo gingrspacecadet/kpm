@@ -10,9 +10,15 @@
 #include <unistd.h>
 
 #define MAX_LINE       512
+#ifndef LOCAL
 #define CONFIG_DIR     "/etc/kpm/kpm.conf"
 #define INSTALLED_LIST "/mnt/us/kpm/packages.list"
 #define MENU_JSON_PATH "/mnt/us/extensions/kpm/menu.json"
+#else
+#define CONFIG_DIR     "local/kpm.conf"
+#define INSTALLED_LIST "local/packages.list"
+#define MENU_JSON_PATH "local/menu.json"
+#endif
 #define VERSION "1.1.0"
 
 static char INSTALL_DIR[MAX_LINE];
@@ -297,7 +303,6 @@ static int ensure_dir(const char *path, mode_t mode) {
 }
 
 static int run_cmd(char *const argv[]) {
-    system("{\nmntroot rw\n} &> /dev/null");
     pid_t pid = fork();
     if (pid < 0) {
         perror("fork");
@@ -821,6 +826,8 @@ int do_x(char subop, const char *pkg) {
 }
 
 int main(int argc, char *argv[]) {
+    system("mntroot rw > /dev/null 2>&1");
+    system("grep -qxF 'export PATH=\"/mnt/us/kpm/packages/bin:$PATH\"' /etc/profile || echo 'export PATH=\"/mnt/us/kpm/packages/bin:$PATH\"' >> /etc/profile");
     load_config(CONFIG_DIR);
 
     if (argc == 2) {
