@@ -11,6 +11,6 @@ kpm -S libcrypto
 kpm -S libssl
 kpm -S libz
 
-mv `kpm -Xi`/apk/ /sbin
+mv `kpm -Xi`/apk/apk /sbin
 echo "apk package installed successfully."
 
