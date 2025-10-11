@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-ROOTFS="alpine-rootfs"
+ROOTFS="$HOME/alpine-rootfs"
 
 if [[ "$1" == "-c" && -n "$2" ]]; then
     CMD="$2"

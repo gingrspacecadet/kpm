@@ -1,0 +1,10 @@
+#!/bin/sh
+# Setup
+echo "Installing libcrypto..."
+
+# Install
+echo "Installing to device..."
+
+mv `kpm -Xi`/libcrypto/libcrypto.so.3 /lib/libcrypto.so.3
+echo "{pkg} package installed successfully."
+

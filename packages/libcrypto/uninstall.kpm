@@ -1,0 +1,6 @@
+#!/bin/sh
+# Uninstall
+echo "Uninstalling libcrypto..."
+rm /lib/libcrypto.so.3
+
+echo "libcrypto package uninstalled successfully."

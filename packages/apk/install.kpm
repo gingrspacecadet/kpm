@@ -1,0 +1,10 @@
+#!/bin/sh
+# Setup
+echo "Installing apk..."
+
+# Install
+echo "Installing to device..."
+
+mv `kpm -Xi`/apk/ /sbin
+echo "apk package installed successfully."
+

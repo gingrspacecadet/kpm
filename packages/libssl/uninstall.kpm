@@ -1,0 +1,6 @@
+#!/bin/sh
+# Uninstall
+echo "Uninstalling libssl..."
+rm /lib/libssl.so.3
+
+echo "libssl package uninstalled successfully."

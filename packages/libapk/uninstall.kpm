@@ -1,0 +1,6 @@
+#!/bin/sh
+# Uninstall
+echo "Uninstalling libapk..."
+rm /lib/libapk.so.2.14.0
+
+echo "libapk package uninstalled successfully."

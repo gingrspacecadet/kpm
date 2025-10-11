@@ -1,0 +1,6 @@
+#!/bin/sh
+# Uninstall
+echo "Uninstalling libz..."
+rm /lib/libz.so.1
+
+echo "libz package uninstalled successfully."

@@ -12,3 +12,10 @@ make
 musl
 kindleforge
 git
+apk
+libcrypto
+libz
+libapk
+libc
+libssl
+apk

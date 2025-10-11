@@ -1,0 +1,6 @@
+#!/bin/sh
+# Uninstall
+echo "Uninstalling apk..."
+rm /sbin/apk
+
+echo "apk package uninstalled successfully."

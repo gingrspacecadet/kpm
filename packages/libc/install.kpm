@@ -1,0 +1,10 @@
+#!/bin/sh
+# Setup
+echo "Installing libc..."
+
+# Install
+echo "Installing to device..."
+
+mv `kpm -Xi`/libc/ld-musl-armhf.so.1 /lib
+echo "libc package installed successfully."
+

@@ -1,0 +1,10 @@
+#!/bin/sh
+# Setup
+echo "Installing libz..."
+
+# Install
+echo "Installing to device..."
+
+mv `kpm -Xi`/libz/libz.so.1 /lib/libz.so.1
+echo "libz package installed successfully."
+

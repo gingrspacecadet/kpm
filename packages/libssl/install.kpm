@@ -1,0 +1,10 @@
+#!/bin/sh
+# Setup
+echo "Installing libssl..."
+
+# Install
+echo "Installing to device..."
+
+mv `kpm -Xi`/libssl/libssl.so.3 /lib/libssl.so.3
+echo "libssl package installed successfully."
+

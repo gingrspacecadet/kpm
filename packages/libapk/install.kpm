@@ -1,0 +1,10 @@
+#!/bin/sh
+# Setup
+echo "Installing libapk..."
+
+# Install
+echo "Installing to device..."
+
+mv `kpm -Xi`/libc/libapk.so.2.14.0 /lib
+echo "libc package installed successfully."
+
