@@ -5,6 +5,12 @@ echo "Installing apk..."
 # Install
 echo "Installing to device..."
 
+kpm -S musl
+kpm -S libapk
+kpm -S libcrypto
+kpm -S libssl
+kpm -S libz
+
 mv `kpm -Xi`/apk/ /sbin
 echo "apk package installed successfully."
 
