@@ -1,6 +1,0 @@
-#!/bin/sh
-# Uninstall
-echo "Uninstalling libc..."
-rm /lib/ld-musl-armhf.so.1
-
-echo "libc package uninstalled successfully."

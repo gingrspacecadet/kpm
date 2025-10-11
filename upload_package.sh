@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+# set -euo pipefail
 
 read -rp "Enter package name (e.g. hello or * for all): " pkgname
 
