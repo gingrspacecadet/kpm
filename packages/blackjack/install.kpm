@@ -1,0 +1,24 @@
+#!/bin/sh
+echo "Installing blackjack..."
+
+TEMP_DIR=$(mktemp -d)
+ARCHIVE_URL="https://github.com/Serialbocks/kindle-blackjack/releases/download/v1.0.0/kindle-blackjack_v1.0.0_kindlehf.zip"
+
+echo "Downloading blackjack package..."
+curl -fsSL "$ARCHIVE_URL" -o "$TEMP_DIR/blackjack.zip"
+
+echo "Extracting package..."
+unzip -q "$TEMP_DIR/blackjack.zip" -d "$TEMP_DIR"
+
+echo "Installing to device..."
+cp "$TEMP_DIR/Blackjack.sh" /mnt/us/documents/
+chmod +x /mnt/us/documents/Blackjack.sh
+
+mkdir -p /mnt/us/documents/touch_blackjack
+cp "$TEMP_DIR/touch_blackjack/touch_blackjack" /mnt/us/documents/touch_blackjack/
+chmod +x /mnt/us/documents/touch_blackjack/touch_blackjack
+
+rm -rf "$TEMP_DIR"
+
+echo "blackjack package installed successfully."
+

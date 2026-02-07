@@ -1,0 +1,8 @@
+#!/bin/sh
+echo "Uninstalling blackjack..."
+
+rm -f /mnt/us/documents/Blackjack.sh
+rm -rf /mnt/us/documents/touch_blackjack
+
+echo "blackjack package uninstalled successfully."
+
