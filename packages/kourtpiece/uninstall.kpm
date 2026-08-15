@@ -1,0 +1,20 @@
+#!/bin/sh
+echo "Uninstalling kourtpiece..."
+
+APP_ID="xyz.yatharthtaneja.kourtpiece"
+
+# Stop it if it is running, otherwise the files below are removed underneath a
+# live instance.
+lipc-set-prop com.lab126.appmgrd stop app://$APP_ID >/dev/null 2>&1
+
+rm -rf /mnt/us/documents/kourtpiece
+rm -rf /var/local/mesquite/kourtpiece
+
+# Unlike a plain scriptlet, this app registers itself with the framework, so a
+# clean uninstall has to remove that registration too — otherwise a dead icon
+# is left behind on the home screen.
+sqlite3 /var/local/appreg.db \
+  "DELETE FROM properties WHERE handlerId='$APP_ID'; \
+   DELETE FROM handlerIds WHERE handlerId='$APP_ID';" >/dev/null 2>&1
+
+echo "kourtpiece package uninstalled successfully."
