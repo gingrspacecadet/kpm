@@ -1,0 +1,29 @@
+#!/bin/sh
+
+set -e
+echo "Installing kourtpiece..."
+
+TEMP_DIR=/mnt/us/kourtpiece_tmp
+rm -rf "$TEMP_DIR"
+mkdir -p "$TEMP_DIR"
+
+# Tracks the latest release rather than a pinned version, so a new release
+# reaches users without another package update.
+echo "Downloading kourtpiece package..."
+curl -L -o "$TEMP_DIR/kourtpiece.zip" \
+  https://github.com/yatharthtaneja/kourtpiece/releases/latest/download/kourtpiece.zip
+
+echo "Extracting package..."
+unzip -q "$TEMP_DIR/kourtpiece.zip" -d "$TEMP_DIR"
+
+echo "Installing to device..."
+rm -rf /mnt/us/documents/kourtpiece
+cp -r "$TEMP_DIR/kourtpiece" /mnt/us/documents/
+chmod +x /mnt/us/documents/kourtpiece/kourtpiece.sh
+
+rm -rf "$TEMP_DIR"
+
+echo "kourtpiece package installed successfully."
+echo "Tap 'kourtpiece' in your library once to register and launch it."
+
+exit 0
